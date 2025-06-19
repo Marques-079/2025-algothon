@@ -8,8 +8,10 @@ import numpy as np
 nInst = 50
 currentPos = np.zeros(nInst)
 
+getMyPosition = lambda x: chatgpt(x)
+
 #CHATGPT CODE
-def getMyPosition(prcSoFar):
+def chatgpt(prcSoFar):
     nInst, t = prcSoFar.shape
     # need at least 21 days to compute metrics
     if t < 21:
