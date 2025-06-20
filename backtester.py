@@ -232,19 +232,19 @@ def generate_stats_subplot(
     subplot.axis("off")
 
     win_rate_pct: float = (
-        np.sum(results["daily_pnl"] > 0) / len(results["daily_pnl"]) * 100
+        np.sum(results['daily_pnl'] > 0) / len(results['daily_pnl']) * 100
     )
 
     stats_text: str = (
-        f"Ran from day {results["start_day"]} to {results["end_day"]}\n"
+        f"Ran from day {results['start_day']} to {results['end_day']}\n"
         r"$\bf{Commission \ Turned \ On:}$" + f"{enable_commission}\n\n"
         r"$\bf{Backtester \ Stats}$" + "\n\n"
-        f"Mean PnL: ${results["daily_pnl"].mean():.2f}\n"
-        f"Std Dev: ${results["daily_pnl"].std():.2f}\n"
+        f"Mean PnL: ${results['daily_pnl'].mean():.2f}\n"
+        f"Std Dev: ${results['daily_pnl'].std():.2f}\n"
         f"Annualised Sharpe Ratio: "
-        f"{np.sqrt(250) * results["daily_pnl"].mean() / results["daily_pnl"].std():.2f}\n"
+        f"{np.sqrt(250) * results['daily_pnl'].mean() / results['daily_pnl'].std():.2f}\n"
         f"Win Rate %: {win_rate_pct:.2f}% \n"
-        f"Score: {results["daily_pnl"].mean() - 0.1*results["daily_pnl"].std():.2f}"
+        f"Score: {results['daily_pnl'].mean() - 0.1*results['daily_pnl'].std():.2f}"
     )
 
     subplot.text(
@@ -263,7 +263,7 @@ def generate_cumulative_pnl_subplot(results: BacktesterResults, subplot: Axes) -
 
     # Generate subplot
     subplot.set_title(
-        f"Cumulative Profit and Loss from day {results["start_day"]} to {results["end_day"]}",
+        f"Cumulative Profit and Loss from day {results['start_day']} to {results['end_day']}",
         fontsize=12,
         fontweight="bold",
     )
@@ -289,7 +289,7 @@ def generate_daily_pnl_subplot(results: BacktesterResults, subplot: Axes) -> Axe
 
     # Generate Subplot
     subplot.set_title(
-        f"Daily Profit and Loss (PnL) from day {results["start_day"]} to {results["end_day"]}",
+        f"Daily Profit and Loss (PnL) from day {results['start_day']} to {results['end_day']}",
         fontsize=12,
         fontweight="bold",
     )
@@ -313,7 +313,7 @@ def generate_capital_utilisation_subplot(
     days: ndarray = np.arange(results["start_day"], results["end_day"] + 1)
 
     subplot.set_title(
-        f"Daily capital utilisation from day {results["start_day"]} to {results["end_day"]}",
+        f"Daily capital utilisation from day {results['start_day']} to {results['end_day']}",
         fontsize=12,
         fontweight="bold",
     )
@@ -373,8 +373,8 @@ def generate_sharpe_ratio_subplot(results: BacktesterResults, subplot: Axes) -> 
     sharpe_ratios: ndarray = (cumulative_means / cumulative_std_dev) * np.sqrt(250)
 
     subplot.set_title(
-        f"Change in Annualised Sharpe Ratio from day {results["start_day"]} to"
-        f" {results["end_day"]}",
+        f"Change in Annualised Sharpe Ratio from day {results['start_day']} to"
+        f" {results['end_day']}",
         fontsize=12,
         fontweight="bold",
     )
