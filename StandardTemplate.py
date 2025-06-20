@@ -16,6 +16,7 @@ def export_trading_funcs():
     for name,f in caller_globals.items():
         if isinstance(f, (types.FunctionType, types.MethodType)):
             if getattr(f,"_is_export",False):
+                print(f"Exporting: {name}")
                 exec(f"getMyPosition = {name}",caller_globals)
                 return
 
@@ -45,5 +46,6 @@ class Trader():
         f = find_exports(self)
         for k,item in caller_globals.items():
             if isinstance(item,cname):
+                print(f"Exporting: {k}.{f[0]}")
                 exec(f"getMyPosition = {k}.{f[0]}",caller_globals)
                 return
