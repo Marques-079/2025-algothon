@@ -1,14 +1,7 @@
 #!/usr/bin/env python
 
 import numpy as np
-from eval import loadPrices
-
-# loading prices into matrix
-pricesFile="prices.txt"
-prcAll = loadPrices(pricesFile)
-
-inst1 = prcAll[:, 0]
-print(inst1)
+import pandas as pd
 
 ### INDICATOR FORMAT ###
 # Will take in price as a vector, and output indicator values as vectors
@@ -56,7 +49,7 @@ print(inst1)
 # Bollinger Bands
 
 # Average True Range (ATR) (Close-to-Close Volatility approximates this)
-def close_to_close_volatility(close_prices, period=14):
+def atr_close_to_close(close_prices, period=14):
     close_prices = np.asarray(close_prices)
     abs_differences = np.abs(np.diff(close_prices))
     vol = np.full_like(close_prices, fill_value=np.nan)
@@ -84,3 +77,20 @@ def close_to_close_volatility(close_prices, period=14):
 # VWAP (Volume Weighted Average Price)
 
 # ------------------------------------------------------------------------------------------------------ #
+
+# from eval import loadPrices
+def loadPrices(fn):
+    global nt, nInst
+    df=pd.read_csv(fn, sep='\s+', header=None, index_col=None)
+    (nt,nInst) = df.shape
+    return (df.values).T
+
+# loading prices into matrix
+pricesFile="prices.txt"
+prcAll = loadPrices(pricesFile)
+
+# inst_i = prcAll[instrument_i, NumDays]
+inst1 = prcAll[0, :]
+
+print(inst1)
+print(atr_close_to_close(inst1))
