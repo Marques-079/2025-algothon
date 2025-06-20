@@ -54,12 +54,13 @@ def random(prcSoFar: np.ndarray):
         d_dist.append(diff)
 
     d_dist = np.array(d_dist)
-    m = n*sigmoid( np.arange(1,n+1) )
+    m = sigmoid( np.arange(1,n+1) )
     m = m[:,np.newaxis]
     d_dist *= m
     index_delta = d_dist.sum()/n
+    index_delta/=abs(index_delta)
 
-    r = -index_delta*n*n
+    r = -index_delta*lpmax
     return r
 
 
