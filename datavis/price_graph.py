@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-from main import getMyPosition as getPosition
 import matplotlib.pyplot as plt
 
 nInst = 0
@@ -30,7 +29,6 @@ def plot_dataframe(df,r1,r2, title="DataFrame Plot"):
     plt.show()
 
 
-pricesFile="prices.txt"
+pricesFile="../prices.txt"
 prcAll = loadPrices(pricesFile)
-for i in range (0,60,10):
-    plot_dataframe(prcAll,i,i+10)
+print(prcAll)
