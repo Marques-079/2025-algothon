@@ -1,0 +1,33 @@
+import inspect
+import types
+
+def export(func):
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+    wrapper._is_export = True  # Add custom attribute
+    return wrapper
+
+# Function to scan a given namespace dict (locals() or globals())
+# and find all functions with the _is_marked attribute
+def find_exports(scope):
+    marked_methods = []
+    for name in dir(scope):
+        attr = getattr(scope, name)
+        if isinstance(attr, (types.FunctionType, types.MethodType)):
+            if getattr(attr, '_is_export', False):
+                marked_methods.append(name)
+    return marked_methods
+
+class Trader():
+    def __init__(self):
+        pass
+
+    def export_trader(self):
+        frame = inspect.currentframe()
+        cname = self.__class__
+        caller_globals = frame.f_back.f_globals
+        f = find_exports(self)
+        for k,item in caller_globals.items():
+            if isinstance(item,cname):
+                exec(f"getMyPosition = {k}.{f[0]}",caller_globals)
+                return

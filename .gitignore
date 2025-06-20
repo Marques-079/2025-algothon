@@ -4,3 +4,6 @@
 # ignore Python bytecode
 __pycache__/
 *.py[cod]
+
+py11/
+tf/
