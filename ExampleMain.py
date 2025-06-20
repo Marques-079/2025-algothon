@@ -56,9 +56,11 @@ class Baseline(Trader):
         r = -index_delta*lpmax
         return r
 
-# Exporting the function
-traderExample = Baseline()
-traderExample.export_trader()
+# Uncomment below 
+
+# # Exporting the function
+# traderExample = Baseline()
+# traderExample.export_trader()
 
 
 #-------------------------------------------------- 
@@ -69,5 +71,7 @@ traderExample.export_trader()
 def GodTierTrading(_):
     return np.random.random_integers(-10_000,10_000,50)
 
-# Note: this would NOT override the previous traderExample export so make sure only 1 export at a time
-export_trading_funcs()
+# Uncomment below
+
+# # Note: this would NOT override the previous traderExample export so make sure only 1 export at a time
+# export_trading_funcs()
