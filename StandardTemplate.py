@@ -7,6 +7,15 @@ def export(func):
     wrapper._is_export = True  # Add custom attribute
     return wrapper
 
+def export_trading_funcs():
+    frame = inspect.currentframe()
+    caller_globals = frame.f_back.f_globals
+    for name,f in caller_globals.items():
+        if isinstance(f, (types.FunctionType, types.MethodType)):
+            if getattr(f,"_is_export",False):
+                exec(f"getMyPosition = {name}",caller_globals)
+                return
+
 # Function to scan a given namespace dict (locals() or globals())
 # and find all functions with the _is_marked attribute
 def find_exports(scope):
