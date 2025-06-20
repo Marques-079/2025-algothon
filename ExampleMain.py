@@ -1,3 +1,5 @@
+# Reference for using templates
+
 import numpy as np
 
 from StandardTemplate import Trader, export, export_trading_funcs
@@ -59,21 +61,13 @@ traderExample = Baseline()
 traderExample.export_trader()
 
 
+#-------------------------------------------------- 
+#      Example function the standard template
+#-------------------------------------------------- 
 
+@export
+def GodTierTrading(_):
+    return np.random.random_integers(-10_000,10_000,50)
 
-# Template Indicator Starting
-def MachineOrchestra(prcSoFar):
-    global currentPos
-
-    # nins is number of instruments
-    # nt is number of days in
-    (nins, nt) = prcSoFar.shape
-
-    # Get all indicators
-
-    # Plug into ML models
-
-    # Adjust from current pos
-
-    currentPos = np.zeros(nins)
-    return currentPos
+# Note: this would NOT override the previous traderExample export so make sure only 1 export at a time
+export_trading_funcs()
