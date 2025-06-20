@@ -54,7 +54,7 @@ def random(prcSoFar: np.ndarray):
         d_dist.append(diff)
 
     d_dist = np.array(d_dist)
-    m = sigmoid( np.arange(1,n+1) )
+    m = np.tanh( np.arange(1,n+1) )
     m = m[:,np.newaxis]
     d_dist *= m
     index_delta = d_dist.sum()/n
