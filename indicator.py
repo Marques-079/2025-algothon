@@ -38,7 +38,7 @@
 
 # ------------------------------------------------------------------------------------------------------ #
 
-### Volatility Indicators
+### Volatility Indicators ###
 ## These measure how much the price is changing and indicate market uncertainty or risk.
 
 # Bollinger Bands
@@ -51,7 +51,7 @@
 
 # ------------------------------------------------------------------------------------------------------ #
 
-### Others / Composite Tools
+### Others / Composite Tools ###
 ## More complex or composite tools that combine several data sources.
 
 # Fibonacci Retracement Levels
