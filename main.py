@@ -63,6 +63,22 @@ def random(prcSoFar: np.ndarray):
     r = -index_delta*lpmax
     return r
 
+# Template Indicator Starting
+def MachineOrchestra(prcSoFar):
+    global currentPos
+
+    # nins is number of instruments
+    # nt is number of days in
+    (nins, nt) = prcSoFar.shape
+
+    # Get all indicators
+
+    # Plug into ML models
+
+    # Adjust from current pos
+
+    currentPos = np.zeros(nins)
+    return currentPos
 
 #CHATGPT CODE
 def chatgpt(prcSoFar):
