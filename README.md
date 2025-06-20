@@ -1,6 +1,7 @@
 # WELCOME TO THE REPO GUYS!
 
 Please consider using `StandardTemplate.py` to build a trader!
+Example in `ExampleMain.py`
 Provides
 
 ```py
