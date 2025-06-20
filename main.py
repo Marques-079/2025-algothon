@@ -31,7 +31,6 @@ def sigmoid(x):
   return 1 / (1 + np.exp(-x))
 
 first = True
-lpos = None
 def random(prcSoFar: np.ndarray):
     global first
     global lpos
@@ -49,19 +48,18 @@ def random(prcSoFar: np.ndarray):
         convolved_array[i,:] = np.convolve(prcSoFar[i,:], kernel, mode='same')  # or 'same', 'full'
     
     d_dist = []
-    n = 40
+    n = min(15,t)
     for i in range(1,n+1):
         diff = convolved_array[:,-i:].sum(axis=1)/i
         d_dist.append(diff)
 
     d_dist = np.array(d_dist)
-    m = t*sigmoid( np.arange(1,n+1) )
+    m = n*sigmoid( np.arange(1,n+1) )
     m = m[:,np.newaxis]
     d_dist *= m
     index_delta = d_dist.sum()/n
 
-    r = -index_delta*n
-    lpos = r
+    r = -index_delta*n*n
     return r
 
 
