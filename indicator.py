@@ -1,3 +1,15 @@
+#!/usr/bin/env python
+
+import numpy as np
+from eval import loadPrices
+
+# loading prices into matrix
+pricesFile="prices.txt"
+prcAll = loadPrices(pricesFile)
+
+inst1 = prcAll[:, 0]
+print(inst1)
+
 ### INDICATOR FORMAT ###
 # Will take in price as a vector, and output indicator values as vectors
 # Need separate code to intake prices and pass into the indicators
@@ -43,7 +55,14 @@
 
 # Bollinger Bands
 
-# Average True Range (ATR)
+# Average True Range (ATR) (Close-to-Close Volatility approximates this)
+def close_to_close_volatility(close_prices, period=14):
+    close_prices = np.asarray(close_prices)
+    abs_differences = np.abs(np.diff(close_prices))
+    vol = np.full_like(close_prices, fill_value=np.nan)
+    for i in range(period, len(close_prices)):
+        vol[i] = np.mean(abs_differences[i - period:i])
+    return vol
 
 # Donchian Channels
 
