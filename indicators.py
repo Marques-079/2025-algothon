@@ -191,7 +191,7 @@ def atr_close_to_close(close_prices, period=14):
 
 # ------------------------------------------------------------------------------------------------------ #
 
-### Classifying Market Condition!
+### Classifying Market Condition Indicators & Signals ###
 
 def linear_reg(close_prices, look_back):
     x = np.arange(look_back)
@@ -204,12 +204,27 @@ def linear_reg(close_prices, look_back):
 
     return slope_pct
 
+def price_ma_diff(close_prices, smooth):
+    sma = ma(close_prices, smooth)
+    return close_prices[-1] - sma[-1]
+
+def ma_ma_diff(close_prices, fast, slow):
+    slow_ma = ma(close_prices, slow)
+    fast_ma = ma(close_prices, fast)
+    return fast_ma - slow_ma
+
 def market_condition(prcAll):
     # can use
 
     # linear reg
 
     # rsi
+
+    # over ma (50!) price_ma_diff
+
+    # ma over ma, 50 & 200 ma trend (or 25, 100 more reactive)
+
+    # 
 
     return 0
 
@@ -249,6 +264,7 @@ def loadPrices(fn):
     return (df.values).T
 
 
+# Master graphing function #
 def show_graph():
 
     # loading prices into matrix
@@ -258,6 +274,8 @@ def show_graph():
 
     # draw_ma(prcAll, inst, 50, 200)
     draw_market_condition(prcAll, inst)
+
+# Graphing functions #
 
 def draw_market_condition(prcAll, inst):
     # Evaluate regime at each time step
