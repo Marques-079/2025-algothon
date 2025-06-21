@@ -130,53 +130,58 @@ def atr_close_to_close(close_prices, period=14):
 # ------------------------------------------------------------------------------------------------------ #
 
 ### IMPORTING AND CHECKING ###
-# # from eval import loadPrices
-# def loadPrices(fn):
-#     global nt, nInst
-#     df=pd.read_csv(fn, sep='\s+', header=None, index_col=None)
-#     (nt,nInst) = df.shape
-#     return (df.values).T
+def loadPrices(fn):
+    global nt, nInst
+    df=pd.read_csv(fn, sep=r'\s+', header=None, index_col=None)
+    (nt,nInst) = df.shape
+    return (df.values).T
 
-# # loading prices into matrix
-# pricesFile="prices.txt"
-# prcAll = loadPrices(pricesFile)
+def show_graph():
 
-# # inst_i = prcAll[instrument_i, NumDays]
-# inst1 = prcAll[0, :]
-# closes = inst1
-# period = 14
-# rsi_wilder = rsi_exponential(closes)
-# rsi_simple = rsi_ma(closes)
-# rsi_diff = rsi_wilder - rsi_simple
+    # loading prices into matrix
+    pricesFile="prices.txt"
+    prcAll = loadPrices(pricesFile)
+
+    draw_rsi(prcAll)
+
+def draw_rsi(prcAll, inst):
+    # inst_i = prcAll[instrument_i, NumDays]
+    closes = prcAll[inst, :]
+    period = 14
+    rsi_wilder = rsi_exponential(closes)
+    rsi_simple = rsi_ma(closes)
+    rsi_diff = rsi_wilder - rsi_simple
 
 
-# # --- Plotting with subplots ---
-# fig, axs = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
+    # --- Plotting with subplots ---
+    fig, axs = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
 
-# # --- Subplot 1: Price ---
-# axs[0].plot(closes, color='black', label='Close Price')
-# axs[0].set_title("Closing Price")
-# axs[0].grid(True)
-# axs[0].legend()
+    # --- Subplot 1: Price ---
+    axs[0].plot(closes, color='black', label='Close Price')
+    axs[0].set_title("Closing Price")
+    axs[0].grid(True)
+    axs[0].legend()
 
-# # --- Subplot 2: RSI Comparison ---
-# axs[1].plot(rsi_wilder, label='Wilder RSI', color='blue')
-# axs[1].plot(rsi_simple, label='Simple RSI', color='orange', linestyle='--')
-# axs[1].axhline(70, color='gray', linestyle='--', linewidth=0.5)
-# axs[1].axhline(30, color='gray', linestyle='--', linewidth=0.5)
-# axs[1].set_title(f"RSI Comparison (Period = {period})")
-# axs[1].set_ylabel("RSI")
-# axs[1].grid(True)
-# axs[1].legend()
+    # --- Subplot 2: RSI Comparison ---
+    axs[1].plot(rsi_wilder, label='Wilder RSI', color='blue')
+    axs[1].plot(rsi_simple, label='Simple RSI', color='orange', linestyle='--')
+    axs[1].axhline(70, color='gray', linestyle='--', linewidth=0.5)
+    axs[1].axhline(30, color='gray', linestyle='--', linewidth=0.5)
+    axs[1].set_title(f"RSI Comparison (Period = {period})")
+    axs[1].set_ylabel("RSI")
+    axs[1].grid(True)
+    axs[1].legend()
 
-# # --- Subplot 3: RSI Difference ---
-# axs[2].plot(rsi_diff, label='Wilder RSI - Simple RSI', color='green')
-# axs[2].axhline(0, color='gray', linestyle='--', linewidth=0.5)
-# axs[2].set_title("RSI Difference")
-# axs[2].set_xlabel("Day")
-# axs[2].set_ylabel("Difference")
-# axs[2].grid(True)
-# axs[2].legend()
+    # --- Subplot 3: RSI Difference ---
+    axs[2].plot(rsi_diff, label='Wilder RSI - Simple RSI', color='green')
+    axs[2].axhline(0, color='gray', linestyle='--', linewidth=0.5)
+    axs[2].set_title("RSI Difference")
+    axs[2].set_xlabel("Day")
+    axs[2].set_ylabel("Difference")
+    axs[2].grid(True)
+    axs[2].legend()
 
-# plt.tight_layout()
-# plt.show()
+    plt.tight_layout()
+    plt.show()
+
+show_graph()
