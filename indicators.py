@@ -181,13 +181,68 @@ def atr_close_to_close(close_prices, period=14):
 
 # Fibonacci Retracement Levels
 
-# Pivot Points
-
 # Elliott Wave Theory
 
 # Market Profile
 
-# VWAP (Volume Weighted Average Price)
+# VWAP (Volume Weighted Average Price)'
+
+# Pivots Points
+def get_latest_pivot_high(prices: np.ndarray, left: int = 5, right: int = 5):
+    """
+    Finds the most recent pivot high in the price series.
+
+    Parameters:
+    - prices (np.ndarray): 1D array of prices
+    - left (int): number of candles before the pivot that must be lower
+    - right (int): number of candles after the pivot that must be lower
+
+    Returns:
+    - (pivot_index, pivot_price) or (None, None) if no pivot is found
+    """
+    n = len(prices)
+    for i in range(n - right - 1, left - 1, -1):
+        is_pivot = True
+        for j in range(1, left + 1):
+            if prices[i] <= prices[i - j]:
+                is_pivot = False
+                break
+        if is_pivot:
+            for j in range(1, right + 1):
+                if prices[i] <= prices[i + j]:
+                    is_pivot = False
+                    break
+        if is_pivot:
+            return i, prices[i]
+    return None, None
+
+def get_latest_pivot_low(prices: np.ndarray, left: int = 5, right: int = 5):
+    """
+    Finds the most recent pivot low in the price series.
+
+    Parameters:
+    - prices (np.ndarray): 1D array of prices
+    - left (int): number of candles before the pivot that must be higher
+    - right (int): number of candles after the pivot that must be higher
+
+    Returns:
+    - (pivot_index, pivot_price) or (None, None) if no pivot is found
+    """
+    n = len(prices)
+    for i in range(n - right - 1, left - 1, -1):
+        is_pivot = True
+        for j in range(1, left + 1):
+            if prices[i] >= prices[i - j]:
+                is_pivot = False
+                break
+        if is_pivot:
+            for j in range(1, right + 1):
+                if prices[i] >= prices[i + j]:
+                    is_pivot = False
+                    break
+        if is_pivot:
+            return i, prices[i]
+    return None, None
 
 # ------------------------------------------------------------------------------------------------------ #
 
@@ -196,7 +251,7 @@ def atr_close_to_close(close_prices, period=14):
 def linear_reg(close_prices, look_back):
     x = np.arange(look_back)
     if len(close_prices) < look_back:
-        return None
+        return np.nan
     close_prices = close_prices[-look_back:]
     # Linear regression to get trend slope
     slope, _ = np.polyfit(x, close_prices, deg=1)
@@ -209,11 +264,58 @@ def price_ma_diff(close_prices, smooth):
     return close_prices[-1] - sma[-1]
 
 def ma_ma_diff(close_prices, fast, slow):
-    slow_ma = ma(close_prices, slow)
-    fast_ma = ma(close_prices, fast)
-    return fast_ma - slow_ma
+    if len(close_prices) < slow:
+        return np.nan
+        
+    slow_ma = ma(close_prices[-slow:], slow)
+    fast_ma = ma(close_prices[-fast:], fast)
+    return fast_ma[-1] - slow_ma[-1]
 
+def pivot_breaking(prcAll, look_length):
+    prev_high = get_latest_pivot_high(prcAll, look_length, look_length)[-1]
+    prev_low = get_latest_pivot_low(prcAll, look_length, look_length)[-1]
+
+    # exit if undefined
+    if (prev_high == None) or (prev_low == None) or (len(prcAll) < 1):
+        return None
+    last_price = prcAll[-1]
+
+    # change check with 1 atr
+    curr_atr = atr_close_to_close(prcAll)[-1]
+    atr_breakpoint = 1
+
+    if last_price > prev_high + atr_breakpoint*curr_atr:
+        return 1
+    if last_price < prev_low - atr_breakpoint*curr_atr:
+        return -1
+    return 0
+
+def get_last_privot_position(prcAll, look_length):
+    global pivot_signals
+    end = len(prcAll)-1
+
+    for i in range(end, -1, -1):
+        if pivot_signals[i] != 0:
+            return pivot_signals[i]
+    return None
+
+    # while True:
+    #     if end <= 0:
+    #         return None
+    #     pos = pivot_breaking(prcAll[:end], look_length)
+    #     if pos == None:
+    #         return None
+    #     if pos == 0:
+    #         end -= 1
+    #     else:
+    #         return pos
+
+
+# NEED TO CHANGE!
+pivot_signals = np.zeros(1000)
 def market_condition(prcAll):
+    global pivot_signals
+    # market_condition returns + if up trend, - if down, 0 if stagnant
     # can use
 
     # linear reg
@@ -224,9 +326,35 @@ def market_condition(prcAll):
 
     # ma over ma, 50 & 200 ma trend (or 25, 100 more reactive)
 
-    # 
+    # pivot highs & lows, pivot breaking with ll = 10
+    day = len(prcAll)-1
+    look_length = 10
+    pivot_signal = pivot_breaking(prcAll, look_length)
+    pivot_signals[day] = pivot_signal
 
-    return 0
+    # trend_cont = ma_ma_diff(prcAll, 25, 100)
+    trend_cont = linear_reg(prcAll, 75)
+    # print(f"Day {day}: {trend_cont}")
+    if pivot_signal != 0:
+        return pivot_signal
+    else:
+        # if stagnant signal
+        last_pivot_signal = get_last_privot_position(prcAll, look_length)
+        if last_pivot_signal == 1:
+            if trend_cont> 0:
+                return 1 
+            else:
+                return 0
+        elif last_pivot_signal == -1:
+            if trend_cont < 0:
+                return -1 
+            else:
+                return 0
+        else:
+            return last_pivot_signal
+    return None 
+
+    # return pivot_breaking(prcAll, 10)
 
 def market_condition_test(prices: np.ndarray) -> str:
     """
@@ -270,12 +398,21 @@ def show_graph():
     # loading prices into matrix
     pricesFile="prices.txt"
     prcAll = loadPrices(pricesFile)
-    inst = 40
+    for i in range(15):
+        inst = i 
 
-    # draw_ma(prcAll, inst, 50, 200)
-    draw_market_condition(prcAll, inst)
+        draw_market_condition(prcAll, inst)
 
 # Graphing functions #
+
+def market_name(num):
+    if num == None:
+        return 'unknown'
+    elif num == 0:
+        return 'stagnant'
+    elif num > 0:
+        return 'bullish'
+    return 'bearish'
 
 def draw_market_condition(prcAll, inst):
     # Evaluate regime at each time step
@@ -283,10 +420,12 @@ def draw_market_condition(prcAll, inst):
     T = len(closes)
     regimes = []
     for t in range(T):
+        # market_condition returns + if up trend, - if down, 0 if stagnant
         regime = market_condition(closes[:t+1])
         regimes.append(regime)
 
     # Map regimes to colors
+    regimes_str = [market_name(element) for element in regimes]
     regime_colors = {'bullish': 'green', 'bearish': 'red', 'stagnant': 'gray', 'unknown': 'white'}
 
     # Plotting
@@ -294,17 +433,21 @@ def draw_market_condition(prcAll, inst):
     ax.plot(closes, label='Closing Price', color='black')
 
     for t in range(100, T):
-        color = regime_colors.get(regimes[t], 'white')
+        color = regime_colors.get(regimes_str[t], 'white')
         ax.axvspan(t - 1, t, color=color, alpha=0.2)
 
-    ax.set_title("Market Regime Classification")
+    ax.set_title(f"Market Identification - Inst: {inst}")
     ax.set_xlabel("Time (Days)")
     ax.set_ylabel("Price")
+
+    draw_ma(prcAll, inst, 25, 100, ax)
+
     ax.legend()
+
     plt.tight_layout()
     plt.show()
 
-def draw_ma(prcAll, inst, slow, fast):
+def draw_ma(prcAll, inst, slow, fast, ax=None):
     closes = prcAll[inst, :]
     period = 14
     # --- Compute moving averages ---
@@ -312,17 +455,21 @@ def draw_ma(prcAll, inst, slow, fast):
     ma_200 = ma(closes, period=fast, method='sma')
 
     # --- Plotting ---
-    plt.figure(figsize=(12, 6))
-    plt.plot(closes, label='Close Price', color='black')
-    plt.plot(ma_50, label=f'{fast}-Day MA', color='blue')
-    plt.plot(ma_200, label=f'{slow}-Day MA', color='red')
-    plt.title(f"Close Price with {fast} and {slow}-Day Moving Averages")
-    plt.xlabel("Day")
-    plt.ylabel("Price")
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
+    if ax != None:
+        ax.plot(ma_50, label=f'{fast}-Day MA', color='blue')
+        ax.plot(ma_200, label=f'{slow}-Day MA', color='red')
+    else:
+        plt.figure(figsize=(12, 6))
+        plt.plot(closes, label='Close Price', color='black')
+        plt.plot(ma_50, label=f'{fast}-Day MA', color='blue')
+        plt.plot(ma_200, label=f'{slow}-Day MA', color='red')
+        plt.title(f"Close Price with {fast} and {slow}-Day Moving Averages")
+        plt.xlabel("Day")
+        plt.ylabel("Price")
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
 
 def draw_rsi(prcAll, inst):
     # inst_i = prcAll[instrument_i, NumDays]
