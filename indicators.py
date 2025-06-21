@@ -16,12 +16,74 @@ import matplotlib.pyplot as plt
 # Moving Averages (MA)
 
 # Simple Moving Average (SMA)
+def ma(close, period=14, method='sma'):
+    """
+    Returns a moving average (SMA or EMA) over the closing prices.
+
+    Parameters:
+        close  : np.ndarray of close prices
+        period : lookback window
+        method : 'sma' or 'ema'
+
+    Returns:
+        ma     : np.ndarray of same length, with np.nan where not defined
+    """
+    close = np.asarray(close, dtype=float)
+    ma = np.full_like(close, np.nan)
+
+    if method == 'sma':
+        for i in range(period - 1, len(close)):
+            ma[i] = np.mean(close[i - period + 1:i + 1])
+
+    elif method == 'ema':
+        alpha = 2 / (period + 1)
+        for i in range(len(close)):
+            if i == period - 1:
+                ma[i] = np.mean(close[:period])  # init with SMA
+            elif i >= period:
+                ma[i] = alpha * close[i] + (1 - alpha) * ma[i - 1]
+    
+    else:
+        raise ValueError("method must be 'sma' or 'ema'")
+
+    return ma
 
 # Exponential Moving Average (EMA)
 
 # Moving Average Convergence Divergence (MACD)
 
 # Average Directional Index (ADX)
+def adx_from_closes(close, period=14, smooth_n=None):
+    close = np.asarray(close, dtype=float)
+    delta = np.diff(close)
+
+    plus_dm = np.where(delta > 0, delta, 0)
+    minus_dm = np.where(delta < 0, -delta, 0)
+
+    plus_di = np.full(len(close), np.nan)
+    minus_di = np.full(len(close), np.nan)
+
+    for i in range(period, len(delta)):
+        plus_di[i] = np.mean(plus_dm[i - period:i])
+        minus_di[i] = np.mean(minus_dm[i - period:i])
+
+    # Compute pseudo ADX (just normalized DI difference)
+    di_diff = np.abs(plus_di - minus_di)
+    di_sum = plus_di + minus_di
+    dx = 100 * (di_diff / di_sum)
+
+    adx = np.full(len(close), np.nan)
+    for i in range(period * 2, len(dx)):
+        adx[i] = np.mean(dx[i - period:i])
+
+    # --- Optional secondary smoothing ---
+    if smooth_n is not None and smooth_n > 1:
+        smoothed_adx = np.full_like(adx, np.nan)
+        for i in range(smooth_n, len(adx)):
+            smoothed_adx[i] = np.mean(adx[i - smooth_n:i])
+        return smoothed_adx
+    else:
+        return adx
 
 # Parabolic SAR (Stop and Reverse)
 
@@ -129,6 +191,44 @@ def atr_close_to_close(close_prices, period=14):
 
 # ------------------------------------------------------------------------------------------------------ #
 
+### Classifying Market Condition!
+
+def linear_reg(close_prices, look_back):
+    prices = close_prices
+    prices = prices[~np.isnan(prices)]  # Remove NaNs
+
+    recent_prices = prices[-look_back:]
+    x = np.arange(look_back)
+
+    # Linear regression to get trend slope
+    slope, _ = np.polyfit(x, recent_prices, deg=1)
+    slope_pct = slope / np.mean(recent_prices)
+
+
+def market_condition(prices: np.ndarray) -> str:
+    """
+    Classify market condition for a single instrument given a 1D array of closing prices.
+    Returns 'bullish', 'bearish', or 'stagnant'.
+    """
+    tl = 100
+    if len(prices) < tl:
+        return "unknown"
+    slope_pct = linear_reg
+
+    # Long-term average
+    ma_long = np.mean(recent_prices)
+    current_price = recent_prices[-1]
+
+    # Classification logic
+    # if linear regression pointing up + price above ma then bullish!
+    cut_off = 0
+    if slope_pct > cut_off and current_price > ma_long:
+        return "bullish"
+    elif slope_pct < -cut_off and current_price < ma_long:
+        return "bearish"
+    else:
+        return "stagnant"
+
 ### IMPORTING AND CHECKING ###
 def loadPrices(fn):
     global nt, nInst
@@ -136,13 +236,63 @@ def loadPrices(fn):
     (nt,nInst) = df.shape
     return (df.values).T
 
+
 def show_graph():
 
     # loading prices into matrix
     pricesFile="prices.txt"
     prcAll = loadPrices(pricesFile)
+    inst = 40
 
-    draw_rsi(prcAll)
+    draw_ma(prcAll, inst, 50, 200)
+    # draw_market_condition(prcAll, inst)
+
+def draw_market_condition(prcAll, inst):
+    # Evaluate regime at each time step
+    closes = prcAll[inst, :]
+    T = len(closes)
+    regimes = []
+    for t in range(T):
+        regime = market_condition(closes[:t+1])
+        regimes.append(regime)
+
+    # Map regimes to colors
+    regime_colors = {'bullish': 'green', 'bearish': 'red', 'stagnant': 'gray', 'unknown': 'white'}
+
+    # Plotting
+    fig, ax = plt.subplots(figsize=(14, 6))
+    ax.plot(closes, label='Closing Price', color='black')
+
+    for t in range(100, T):
+        color = regime_colors.get(regimes[t], 'white')
+        ax.axvspan(t - 1, t, color=color, alpha=0.2)
+
+    ax.set_title("Market Regime Classification")
+    ax.set_xlabel("Time (Days)")
+    ax.set_ylabel("Price")
+    ax.legend()
+    plt.tight_layout()
+    plt.show()
+
+def draw_ma(prcAll, inst, slow, fast):
+    closes = prcAll[inst, :]
+    period = 14
+    # --- Compute moving averages ---
+    ma_50 = ma(closes, period=slow, method='sma')
+    ma_200 = ma(closes, period=fast, method='sma')
+
+    # --- Plotting ---
+    plt.figure(figsize=(12, 6))
+    plt.plot(closes, label='Close Price', color='black')
+    plt.plot(ma_50, label=f'{fast}-Day MA', color='blue')
+    plt.plot(ma_200, label=f'{slow}-Day MA', color='red')
+    plt.title(f"Close Price with {fast} and {slow}-Day Moving Averages")
+    plt.xlabel("Day")
+    plt.ylabel("Price")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
 
 def draw_rsi(prcAll, inst):
     # inst_i = prcAll[instrument_i, NumDays]
@@ -180,6 +330,34 @@ def draw_rsi(prcAll, inst):
     axs[2].set_ylabel("Difference")
     axs[2].grid(True)
     axs[2].legend()
+
+    plt.tight_layout()
+    plt.show()
+
+def draw_adx(prcAll, inst):
+    # --- Calculate ADX ---
+    closes = prcAll[inst, :]
+    period = 14
+    smoothing = 14
+    adx = adx_from_closes(closes, period, smoothing)
+
+    # --- Plot ---
+    fig, axs = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+
+    # Subplot 1: Close price
+    axs[0].plot(closes, label='Close Price', color='black')
+    axs[0].set_title("Close Price")
+    axs[0].legend()
+    axs[0].grid(True)
+
+    # Subplot 2: Pseudo-ADX
+    axs[1].plot(adx, label='Pseudo ADX (close-only)', color='blue')
+    axs[1].axhline(25, color='gray', linestyle='--', linewidth=0.5, label='Trend Threshold (25)')
+    axs[1].set_title("Pseudo ADX from Closing Prices Only")
+    axs[1].set_xlabel("Day")
+    axs[1].set_ylabel("Value")
+    axs[1].legend()
+    axs[1].grid(True)
 
     plt.tight_layout()
     plt.show()
