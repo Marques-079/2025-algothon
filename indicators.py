@@ -194,26 +194,38 @@ def atr_close_to_close(close_prices, period=14):
 ### Classifying Market Condition!
 
 def linear_reg(close_prices, look_back):
-    prices = close_prices
-    prices = prices[~np.isnan(prices)]  # Remove NaNs
-
-    recent_prices = prices[-look_back:]
     x = np.arange(look_back)
-
+    if len(close_prices) < look_back:
+        return None
+    close_prices = close_prices[-look_back:]
     # Linear regression to get trend slope
-    slope, _ = np.polyfit(x, recent_prices, deg=1)
-    slope_pct = slope / np.mean(recent_prices)
+    slope, _ = np.polyfit(x, close_prices, deg=1)
+    slope_pct = slope / np.mean(close_prices)
 
+    return slope_pct
 
-def market_condition(prices: np.ndarray) -> str:
+def market_condition(prcAll):
+    # can use
+
+    # linear reg
+
+    # rsi
+
+    return 0
+
+def market_condition_test(prices: np.ndarray) -> str:
     """
     Classify market condition for a single instrument given a 1D array of closing prices.
     Returns 'bullish', 'bearish', or 'stagnant'.
     """
+    prices = prices[~np.isnan(prices)]  # Remove NaNs
+
+
     tl = 100
+    recent_prices = prices[-tl:]
     if len(prices) < tl:
         return "unknown"
-    slope_pct = linear_reg
+    slope_pct = linear_reg(prices, tl)
 
     # Long-term average
     ma_long = np.mean(recent_prices)
@@ -244,8 +256,8 @@ def show_graph():
     prcAll = loadPrices(pricesFile)
     inst = 40
 
-    draw_ma(prcAll, inst, 50, 200)
-    # draw_market_condition(prcAll, inst)
+    # draw_ma(prcAll, inst, 50, 200)
+    draw_market_condition(prcAll, inst)
 
 def draw_market_condition(prcAll, inst):
     # Evaluate regime at each time step
