@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import math
 
 ### INDICATOR FORMAT ###
 # Will take in price as a vector, and output indicator values as vectors
@@ -271,7 +272,7 @@ def ma_ma_diff(close_prices, fast, slow):
     fast_ma = ma(close_prices[-fast:], fast)
     return fast_ma[-1] - slow_ma[-1]
 
-def pivot_breaking(prcAll, look_length):
+def pivot_breaking(prcAll, look_length, atr_breakpoint):
     prev_high = get_latest_pivot_high(prcAll, look_length, look_length)[-1]
     prev_low = get_latest_pivot_low(prcAll, look_length, look_length)[-1]
 
@@ -282,7 +283,6 @@ def pivot_breaking(prcAll, look_length):
 
     # change check with 1 atr
     curr_atr = atr_close_to_close(prcAll)[-1]
-    atr_breakpoint = 1
 
     if last_price > prev_high + atr_breakpoint*curr_atr:
         return 1
@@ -290,8 +290,7 @@ def pivot_breaking(prcAll, look_length):
         return -1
     return 0
 
-def get_last_privot_position(prcAll, look_length):
-    global pivot_signals
+def get_last_privot_position(prcAll, pivot_signals):
     end = len(prcAll)-1
 
     for i in range(end, -1, -1):
@@ -310,38 +309,43 @@ def get_last_privot_position(prcAll, look_length):
     #     else:
     #         return pos
 
+def get_len_of_trend(day):
+    # returns the length * dir of trend, otherwise None
+    if day > 1 and market_signals[day-1] not in [0, np.nan]:
+        count = 0
+        trend = market_signals[day-1]
+        while day > 1 and market_signals[day-1] == trend:
+            count += 1
+            day -= 1
+        return count * trend
+    return np.nan
 
 # NEED TO CHANGE!
 pivot_signals = np.zeros(1000)
-def market_condition(prcAll):
-    global pivot_signals
-    # market_condition returns + if up trend, - if down, 0 if stagnant
-    # can use
+long_pivot_signals = np.zeros(1000)
+market_signals = np.zeros(1000)
+def market_condition_logic(trend_cont, pivot_signal, last_pivot_signal, long_pivot_signal, last_long_pivot_signal, pivot_signal_changed):
+    if pivot_signal != 0 and not pivot_signal_changed:
+        if pivot_signal == None:
+            return None
+        elif pivot_signal == 1:
+            if long_pivot_signal == 1:
+                return 1
+            else:
+                return 0
 
-    # linear reg
+        elif pivot_signal == -1:
+            if long_pivot_signal == -1:
+                return -1
+            else:
+                return 0
 
-    # rsi
-
-    # over ma (50!) price_ma_diff
-
-    # ma over ma, 50 & 200 ma trend (or 25, 100 more reactive)
-
-    # pivot highs & lows, pivot breaking with ll = 10
-    day = len(prcAll)-1
-    look_length = 10
-    pivot_signal = pivot_breaking(prcAll, look_length)
-    pivot_signals[day] = pivot_signal
-
-    # trend_cont = ma_ma_diff(prcAll, 25, 100)
-    trend_cont = linear_reg(prcAll, 75)
-    # print(f"Day {day}: {trend_cont}")
-    if pivot_signal != 0:
-        return pivot_signal
     else:
+        if not smooth:
+            return 0
         # if stagnant signal
-        last_pivot_signal = get_last_privot_position(prcAll, look_length)
         if last_pivot_signal == 1:
-            if trend_cont> 0:
+            if trend_cont > 0:
                 return 1 
             else:
                 return 0
@@ -354,7 +358,54 @@ def market_condition(prcAll):
             return last_pivot_signal
     return None 
 
-    # return pivot_breaking(prcAll, 10)
+def market_condition_setup(prcAll, smooth=True):
+    # market_condition returns + if up trend, - if down, 0 if stagnant
+
+    ## General vars
+    global pivot_signals
+    global market_signals
+    day = len(prcAll)-1
+
+    ## Trading variables
+    look_length = 10 # for pivots!
+    long_look_length = 75 # for pivots!
+    atr_breakpoint = 1 # for pivots!
+    atr_factor = 0.03
+    max_atr_factor = 3
+    lin_reg_lookback = 50
+    lin_factor = 0.50
+
+    ## Altering based on length of trend!
+    len_trend = get_len_of_trend(day)
+    if not np.isnan(len_trend):
+        lin_reg_lookback += math.floor(abs(len_trend)*lin_factor)
+        atr_breakpoint += min(abs(len_trend)*atr_factor, max_atr_factor)
+
+
+    # can use
+        # linear reg
+        # rsi
+        # over ma (50!) price_ma_diff
+        # ma over ma, 50 & 200 ma trend (or 25, 100 more reactive)
+        # pivot highs & lows, pivot breaking with ll = 10
+    
+    ## get pivot information
+    pivot_signal = pivot_breaking(prcAll, look_length, atr_breakpoint)
+    long_pivot_signal = pivot_breaking(prcAll, long_look_length, atr_breakpoint)
+    pivot_signals[day] = pivot_signal
+    long_pivot_signals[day] = long_pivot_signal
+    last_pivot_signal = get_last_privot_position(prcAll, pivot_signals)
+    last_long_pivot_signal = get_last_privot_position(prcAll, long_pivot_signals)
+    pivot_signal_changed = pivot_signal != pivot_signals[day-1] if day > 1 else False
+
+    ## get overall trend information
+    # trend_cont = ma_ma_diff(prcAll, 25, 100)
+    trend_cont = linear_reg(prcAll, lin_reg_lookback)
+
+    ## pass data into logic system & save
+    market_signal = market_condition_logic(trend_cont, pivot_signal, last_pivot_signal, long_pivot_signal, last_long_pivot_signal, pivot_signal_changed )
+    market_signals[day] = market_signal
+    return market_signal
 
 def market_condition_test(prices: np.ndarray) -> str:
     """
@@ -391,17 +442,52 @@ def loadPrices(fn):
     (nt,nInst) = df.shape
     return (df.values).T
 
+def show_multi_panel_graph(prcAll, inst_list, smooth=True):
+    """
+    Plot multiple instruments' market conditions in a grid of subplots.
 
-# Master graphing function #
-def show_graph():
+    Parameters:
+    - prcAll: price matrix of shape (nInst, T)
+    - inst_list: list of instrument indices to plot
+    - smooth: whether to apply smoothing in market condition logic
+    """
+    nInst = len(inst_list)
+    ncols = 5  # You can change this depending on your screen layout
+    nrows = math.ceil(nInst / ncols)
 
-    # loading prices into matrix
-    pricesFile="prices.txt"
-    prcAll = loadPrices(pricesFile)
-    for i in range(15):
-        inst = i 
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(5*ncols, 3.5*nrows), squeeze=False)
+    regime_colors = {'bullish': 'green', 'bearish': 'red', 'stagnant': 'gray', 'unknown': 'white'}
 
-        draw_market_condition(prcAll, inst)
+    for idx, inst in enumerate(inst_list):
+        row, col = divmod(idx, ncols)
+        ax = axes[row][col]
+
+        closes = prcAll[inst, :]
+        T = len(closes)
+        regimes = []
+
+        for t in range(T):
+            regime = market_condition_setup(closes[:t+1], smooth)
+            regimes.append(regime)
+
+        regimes_str = [market_name(r) for r in regimes]
+        ax.plot(closes, color='black', linewidth=1.2)
+
+        for t in range(100, T):
+            color = regime_colors.get(regimes_str[t], 'white')
+            ax.axvspan(t - 1, t, color=color, alpha=0.2)
+
+        ax.set_title(f"Instrument {inst}")
+        ax.set_xlabel("Time")
+        ax.set_ylabel("Price")
+
+    # Hide unused subplots
+    for i in range(nInst, nrows * ncols):
+        row, col = divmod(i, ncols)
+        axes[row][col].axis('off')
+
+    plt.tight_layout()
+    plt.show()
 
 # Graphing functions #
 
@@ -421,7 +507,7 @@ def draw_market_condition(prcAll, inst):
     regimes = []
     for t in range(T):
         # market_condition returns + if up trend, - if down, 0 if stagnant
-        regime = market_condition(closes[:t+1])
+        regime = market_condition(closes[:t+1], smooth)
         regimes.append(regime)
 
     # Map regimes to colors
@@ -440,7 +526,7 @@ def draw_market_condition(prcAll, inst):
     ax.set_xlabel("Time (Days)")
     ax.set_ylabel("Price")
 
-    draw_ma(prcAll, inst, 25, 100, ax)
+    # draw_ma(prcAll, inst, 25, 100, ax)
 
     ax.legend()
 
@@ -539,4 +625,21 @@ def draw_adx(prcAll, inst):
     plt.tight_layout()
     plt.show()
 
-show_graph()
+def main(inst_list, smooth):
+    pricesFile="prices.txt"
+    prcAll = loadPrices(pricesFile)
+    show_multi_panel_graph(prcAll, inst_list, smooth)
+
+## Vars to change for viewing
+# Smoothing between pivot breaking
+smooth = True
+
+inst_range = True 
+(lower_bound, upper_bound) = (10, 20)
+
+if inst_range:
+    inst_list = list(range(lower_bound, upper_bound))
+else:
+    inst_list = [5]
+
+main(inst_list, smooth)
