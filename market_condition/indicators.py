@@ -276,7 +276,7 @@ def donchian_channel_percentile(close: np.ndarray, window: int = 20) -> np.ndarr
     highest = close.rolling(window).max()
     percentile = (close - lowest) / (highest - lowest)
     return percentile.to_numpy()
-    
+
 # Keltner Channels
 
 # ------------------------------------------------------------------------------------------------------ #
@@ -565,12 +565,6 @@ def market_condition_test(prices: np.ndarray) -> str:
     else:
         return "stagnant"
 
-### IMPORTING AND CHECKING ###
-def loadPrices(fn):
-    global nt, nInst
-    df=pd.read_csv(fn, sep=r'\s+', header=None, index_col=None)
-    (nt,nInst) = df.shape
-    return (df.values).T
 
 def show_multi_panel_graph(prcAll, inst_list, smooth=True):
     """
@@ -787,6 +781,13 @@ def draw_sar(prcAll, inst, initial_af=0.02, max_af=0.2):
     plt.grid(True)
     plt.tight_layout()
     plt.show()
+
+### IMPORTING AND CHECKING ###
+def loadPrices(fn):
+    global nt, nInst
+    df=pd.read_csv(fn, sep=r'\s+', header=None, index_col=None)
+    (nt,nInst) = df.shape
+    return (df.values).T
 
 def main(inst_list, smooth):
     pricesFile="prices.txt"
