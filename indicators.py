@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import math
+from scipy.stats import percentileofscore
 
 ### INDICATOR FORMAT ###
 # Will take in price as a vector, and output indicator values as vectors
@@ -17,6 +18,8 @@ import math
 # Moving Averages (MA)
 
 # Simple Moving Average (SMA)
+# Exponential Moving Average (EMA)
+
 def ma(close, period=14, method='sma'):
     """
     Returns a moving average (SMA or EMA) over the closing prices.
@@ -48,8 +51,6 @@ def ma(close, period=14, method='sma'):
         raise ValueError("method must be 'sma' or 'ema'")
 
     return ma
-
-# Exponential Moving Average (EMA)
 
 # Moving Average Convergence Divergence (MACD)
 
@@ -640,7 +641,7 @@ def main(inst_list, smooth):
 smooth = True
 
 inst_range = True 
-(lower_bound, upper_bound) = (10, 20)
+(lower_bound, upper_bound) = (10, 30)
 
 if inst_range:
     inst_list = list(range(lower_bound, upper_bound))
