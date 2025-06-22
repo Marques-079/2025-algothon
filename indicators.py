@@ -78,12 +78,6 @@ def macd(close: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
 
 # Average Directional Index (ADX)
 def adx_from_closes(close, period=14, smooth_n=None):
-    '''
-    ADX is a measure of trend strength, derived from the directional movement indicators (DI).
-    Just shows that if ADX > 25 a trend 'to follow' could be emerging otherwise if <20 could mean no trend (random walk).
-
-    DI can by +/- and is a calculation of the average directional movement over a period.
-    '''
     close = np.asarray(close, dtype=float)
     delta = np.diff(close)
 
