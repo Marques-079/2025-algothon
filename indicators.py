@@ -3,6 +3,8 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import math
+from scipy.stats import percentileofscore
 
 ### INDICATOR FORMAT ###
 # Will take in price as a vector, and output indicator values as vectors
@@ -13,44 +15,66 @@ import matplotlib.pyplot as plt
 ### Trend Indicators ###
 ## These help identify the direction and strength of a market trend.
 
+# the rank of price compared to previous days (0-1 float)
+def rolling_percentile(close: np.ndarray, window: int) -> np.ndarray:
+    """
+    Rolling Percentile Rank
+    Measures how today's price ranks in the last 'window' days.
+    Captures price extremity in context of recent range.
+    """
+    result = np.full_like(close, np.nan, dtype=np.float64)
+    for i in range(window - 1, len(close)):
+        window_vals = close[i - window + 1:i + 1]
+        result[i] = percentileofscore(window_vals, window_vals[-1]) / 100
+    return result
+
+# Trending Streak integer
+def up_down_streak(close: np.ndarray, direction: str = 'up') -> np.ndarray:
+    """
+    Up or Down Streak Counter
+    Tracks consecutive gains or losses.
+    Helpful for spotting overextended trends or consolidations.
+    """
+    streak = np.zeros_like(close)
+    comp = np.greater if direction == 'up' else np.less
+    for i in range(1, len(close)):
+        streak[i] = streak[i-1] + 1 if comp(close[i], close[i-1]) else 0
+    return streak
+
 # Moving Averages (MA)
 
 # Simple Moving Average (SMA)
-def ma(close, period=14, method='sma'):
+def sma(close: np.ndarray, window: int) -> np.ndarray:
     """
-    Returns a moving average (SMA or EMA) over the closing prices.
-
-    Parameters:
-        close  : np.ndarray of close prices
-        period : lookback window
-        method : 'sma' or 'ema'
-
-    Returns:
-        ma     : np.ndarray of same length, with np.nan where not defined
+    Simple Moving Average (SMA)
+    Smooths price data by averaging over a window.
+    Useful for identifying trend direction.
     """
-    close = np.asarray(close, dtype=float)
-    ma = np.full_like(close, np.nan)
-
-    if method == 'sma':
-        for i in range(period - 1, len(close)):
-            ma[i] = np.mean(close[i - period + 1:i + 1])
-
-    elif method == 'ema':
-        alpha = 2 / (period + 1)
-        for i in range(len(close)):
-            if i == period - 1:
-                ma[i] = np.mean(close[:period])  # init with SMA
-            elif i >= period:
-                ma[i] = alpha * close[i] + (1 - alpha) * ma[i - 1]
-    
-    else:
-        raise ValueError("method must be 'sma' or 'ema'")
-
-    return ma
+    return pd.Series(close).rolling(window).mean().to_numpy()
 
 # Exponential Moving Average (EMA)
+def ema(close: np.ndarray, span: int) -> np.ndarray:
+    """
+    Exponential Moving Average (EMA)
+    Like SMA but more responsive to recent changes.
+    Captures faster shifts in trend.
+    """
+    return pd.Series(close).ewm(span=span, adjust=False).mean().to_numpy()
 
 # Moving Average Convergence Divergence (MACD)
+def macd(close: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Moving Average Convergence Divergence (MACD)
+    Difference between short- and long-term EMAs (12 vs 26).
+    Combined with signal line to detect trend shifts.
+    """
+    ema_12 = ema(close, 12)
+    ema_26 = ema(close, 26)
+    macd_line = ema_12 - ema_26
+    signal_line = pd.Series(macd_line).ewm(span=9, adjust=False).mean().to_numpy()
+    hist = macd_line - signal_line
+    return macd_line, signal_line, hist
+
 
 # Average Directional Index (ADX)
 def adx_from_closes(close, period=14, smooth_n=None):
@@ -92,6 +116,62 @@ def adx_from_closes(close, period=14, smooth_n=None):
         return adx
 
 # Parabolic SAR (Stop and Reverse)
+def parabolic_sar(close: np.ndarray,
+                  initial_af: float = 0.02,
+                  max_af: float = 0.2) -> np.ndarray:
+    """
+    Parabolic SAR approximation using closing prices only.
+    Normally uses high/low data, but this version simulates trend following behavior
+    from close prices alone. Useful as a trend direction tracker.
+
+    Parameters:
+    - close: np.ndarray of closing prices
+    - initial_af: starting acceleration factor (default 0.02)
+    - max_af: maximum acceleration factor (default 0.2)
+
+    Returns:
+    - np.ndarray of SAR values (same length as close), with np.nan before trend start
+    """
+
+    sar = np.full_like(close, np.nan)
+    trend = 1 if close[1] > close[0] else -1  # Start with basic trend
+    af = initial_af
+    ep = close[1]  # extreme point (highest close in uptrend, lowest in downtrend)
+    sar_val = close[0]
+
+    for i in range(2, len(close)):
+        prev_sar = sar_val
+        if trend == 1:
+            ep = max(ep, close[i])
+            sar_val = sar_val + af * (ep - sar_val)
+            if close[i] < sar_val:
+                # Reverse to downtrend
+                trend = -1
+                sar_val = ep  # start SAR at last EP
+                ep = close[i]
+                af = initial_af
+            else:
+                if close[i] > ep:
+                    ep = close[i]
+                    af = min(af + initial_af, max_af)
+
+        else:
+            ep = min(ep, close[i])
+            sar_val = sar_val + af * (ep - sar_val)
+            if close[i] > sar_val:
+                # Reverse to uptrend
+                trend = 1
+                sar_val = ep
+                ep = close[i]
+                af = initial_af
+            else:
+                if close[i] < ep:
+                    ep = close[i]
+                    af = min(af + initial_af, max_af)
+
+        sar[i] = sar_val
+
+    return sar
 
 # Ichimoku Cloud
 
@@ -101,60 +181,34 @@ def adx_from_closes(close, period=14, smooth_n=None):
 ## These show the speed of price movements and are useful for identifying overbought or oversold conditions.
 
 # Relative Strength Index (RSI)
-def rsi_exponential(close, period=14):
-    if close.size <= 14:
-        return np.full_like(close, fill_value=np.nan)
-
-    close = np.asarray(close, dtype=float)
-    delta = np.diff(close)
-
-    gain = np.where(delta > 0, delta, 0)
-    loss = np.where(delta < 0, -delta, 0)
-
-    avg_gain = np.empty_like(close)
-    avg_loss = np.empty_like(close)
-    avg_gain[:period] = np.nan
-    avg_loss[:period] = np.nan
-
-    # First average: simple average
-    avg_gain[period] = np.mean(gain[:period])
-    avg_loss[period] = np.mean(loss[:period])
-
-    # Subsequent: exponential smoothing (Wilder's method)
-    for i in range(period + 1, len(close)):
-        avg_gain[i] = (avg_gain[i - 1] * (period - 1) + gain[i - 1]) / period
-        avg_loss[i] = (avg_loss[i - 1] * (period - 1) + loss[i - 1]) / period
-
-    rs = avg_gain / avg_loss
+def rsi(close: np.ndarray, window: int) -> np.ndarray:
+    """
+    Relative Strength Index (RSI)
+    Oscillator between 0 and 100 reflecting price strength.
+    >70 may indicate overbought, <30 oversold.
+    """
+    delta = np.diff(close, prepend=np.nan)
+    gain = np.where(delta > 0, delta, 0.0)
+    loss = np.where(delta < 0, -delta, 0.0)
+    
+    gain_series = pd.Series(gain).rolling(window).mean()
+    loss_series = pd.Series(loss).rolling(window).mean()
+    
+    rs = gain_series / (loss_series + 1e-10)
     rsi = 100 - (100 / (1 + rs))
-    rsi[:period] = np.nan  # RSI is undefined for the first `period` points
-
-    return rsi
-
-def rsi_ma(close_prices, period=14):
-    close_prices = np.asarray(close_prices, dtype=float)
-    delta = np.diff(close_prices)  # price changes
-
-    gain = np.where(delta > 0, delta, 0)
-    loss = np.where(delta < 0, -delta, 0)
-
-    rsi = np.full(len(close_prices), np.nan)  # final RSI output (same length as close)
-
-    for i in range(period, len(close_prices) - 1):
-        avg_gain = np.mean(gain[i - period:i])
-        avg_loss = np.mean(loss[i - period:i])
-
-        if avg_loss == 0:
-            rsi[i + 1] = 100  # prevent division by zero — means only gains
-        else:
-            rs = avg_gain / avg_loss
-            rsi[i + 1] = 100 - (100 / (1 + rs))
-
-    return rsi
+    
+    return rsi.to_numpy()
 
 # Stochastic Oscillator
 
 # Rate of Change (ROC)
+def roc(close: np.ndarray, period: int) -> np.ndarray:
+    """
+    Rate of Change (ROC)
+    Measures percentage change from 'period' days ago.
+    Indicates strength and direction of momentum.
+    """
+    return (close / np.roll(close, period)) - 1 if period < len(close) else np.full_like(close, np.nan)
 
 # Commodity Channel Index (CCI)
 
@@ -168,17 +222,14 @@ def rsi_ma(close_prices, period=14):
 # Bollinger Bands
 
 # Average True Range (ATR) (Close-to-Close Volatility approximates this)
-def atr_close_to_close(close_prices, period=14):
-    '''
-    Sum of upwards and downwards price movements over a period. 
-    '''
-    close_prices = np.asarray(close_prices)
-    abs_differences = np.abs(np.diff(close_prices))
-    vol = np.full_like(close_prices, fill_value=np.nan)
-    for i in range(period, len(close_prices)):
-        vol[i] = np.mean(abs_differences[i - period:i])
-    return vol
-
+def atr_close_to_close(close: np.ndarray, window: int = 14) -> np.ndarray:
+    """
+    Approximate Average True Range (ATR)
+    Normally uses high/low/close; here approximated with abs diff of close.
+    Measures volatility for detecting quiet vs explosive periods.
+    """
+    diff = np.abs(np.diff(close, prepend=np.nan))
+    return pd.Series(diff).rolling(window).mean().to_numpy()
 # Donchian Channels
 
 # Keltner Channels
@@ -187,6 +238,27 @@ def atr_close_to_close(close_prices, period=14):
 
 ### Others / Composite Tools ###
 ## More complex or composite tools that combine several data sources.
+
+# Rolling ST DEV - useful for stagnant
+def rolling_std(close: np.ndarray, window: int) -> np.ndarray:
+    """
+    Rolling Standard Deviation
+    Measures local price volatility.
+    Useful for detecting stagnation or explosive moves.
+    """
+    return pd.Series(close).rolling(window).std().to_numpy()
+
+# zscore - useful for outbreaks + trend reversals
+def zscore(close: np.ndarray, window: int) -> np.ndarray:
+    """
+    Z-Score
+    Normalized deviation from the rolling mean.
+    Highlights relative overbought/oversold conditions.
+    """
+    series = pd.Series(close)
+    mean = series.rolling(window).mean()
+    std = series.rolling(window).std()
+    return ((series - mean) / std).to_numpy()
 
 # Fibonacci Retracement Levels
 
@@ -280,12 +352,7 @@ def ma_ma_diff(close_prices, fast, slow):
     fast_ma = ma(close_prices[-fast:], fast)
     return fast_ma[-1] - slow_ma[-1]
 
-def pivot_breaking(prcAll, look_length):
-    '''
-    If the last price is above the previous pivot high + 1 ATR indicates a possible bullish breakout -> Enter long
-    If the last price is below the previous pivot low - 1 ATR indicates a possible bearish breakout -> Enter short
-    If it outputs 0 this may indicate a stagnant market condition, may be a consolidation phase
-    '''
+def pivot_breaking(prcAll, look_length, atr_breakpoint):
     prev_high = get_latest_pivot_high(prcAll, look_length, look_length)[-1]
     prev_low = get_latest_pivot_low(prcAll, look_length, look_length)[-1]
 
@@ -296,7 +363,6 @@ def pivot_breaking(prcAll, look_length):
 
     # change check with 1 atr
     curr_atr = atr_close_to_close(prcAll)[-1]
-    atr_breakpoint = 1
 
     if last_price > prev_high + atr_breakpoint*curr_atr:
         return 1
@@ -304,9 +370,7 @@ def pivot_breaking(prcAll, look_length):
         return -1
     return 0
 
-
-def get_last_privot_position(prcAll, look_length):
-    global pivot_signals
+def get_last_privot_position(prcAll, pivot_signals):
     end = len(prcAll)-1
 
     for i in range(end, -1, -1):
@@ -325,38 +389,45 @@ def get_last_privot_position(prcAll, look_length):
     #     else:
     #         return pos
 
+def get_len_of_trend(day):
+    # returns the length * dir of trend, otherwise None
+    if day > 1 and market_signals[day-1] not in [0, np.nan]:
+        count = 0
+        trend = market_signals[day-1]
+        while day > 1 and market_signals[day-1] == trend:
+            count += 1
+            day -= 1
+        return count * trend
+    return np.nan
 
 # NEED TO CHANGE!
 pivot_signals = np.zeros(1000)
-def market_condition(prcAll):
-    global pivot_signals
-    # market_condition returns + if up trend, - if down, 0 if stagnant
-    # can use
-
-    # linear reg
-
-    # rsi
-
-    # over ma (50!) price_ma_diff
-
-    # ma over ma, 50 & 200 ma trend (or 25, 100 more reactive)
-
-    # pivot highs & lows, pivot breaking with ll = 10
-    day = len(prcAll)-1
-    look_length = 10
-    pivot_signal = pivot_breaking(prcAll, look_length)
-    pivot_signals[day] = pivot_signal
-
-    # trend_cont = ma_ma_diff(prcAll, 25, 100)
-    trend_cont = linear_reg(prcAll, 75)
-    # print(f"Day {day}: {trend_cont}")
+long_pivot_signals = np.zeros(1000)
+market_signals = np.zeros(1000)
+def market_condition_logic(trend_cont, pivot_signal, last_pivot_signal, long_pivot_signal, last_long_pivot_signal, pivot_signal_changed):
     if pivot_signal != 0:
         return pivot_signal
+    # if pivot_signal != 0 and not pivot_signal_changed:
+        # if pivot_signal == None:
+        #     return None
+        # elif pivot_signal == 1:
+        #     if long_pivot_signal == 1:
+        #         return 1
+        #     else:
+        #         return 0
+
+        # elif pivot_signal == -1:
+        #     if long_pivot_signal == -1:
+        #         return -1
+        #     else:
+        #         return 0
+
     else:
+        if not smooth:
+            return 0
         # if stagnant signal
-        last_pivot_signal = get_last_privot_position(prcAll, look_length)
         if last_pivot_signal == 1:
-            if trend_cont> 0:
+            if trend_cont > 0:
                 return 1 
             else:
                 return 0
@@ -368,14 +439,58 @@ def market_condition(prcAll):
         else:
             return last_pivot_signal
     return None 
-'''
-(Related to code above) pivot_signal measures past pivot breaks where the ATR*thrshold > last_price.
-Linear reg (75 window tunable) measures the slope of the last X prices.
-If there is a valid signal != 0 return else return 0 as stagnant
 
-'''
+def market_condition_setup(prcAll, smooth=True):
+    # market_condition returns + if up trend, - if down, 0 if stagnant
 
-    # return pivot_breaking(prcAll, 10)
+    ## General vars
+    global pivot_signals
+    global market_signals
+    day = len(prcAll)-1
+
+    ## Trading variables
+    look_length = 10 # for pivots!
+    long_look_length = 75 # for pivots!
+    atr_breakpoint = 1 # for pivots!
+    atr_factor = 0.03
+    max_atr_factor = 3
+    lin_reg_lookback = 50
+    lin_factor = 0.50
+
+    ## Altering based on length of trend!
+    len_trend = get_len_of_trend(day)
+    if not np.isnan(len_trend):
+        lin_reg_lookback += math.floor(abs(len_trend)*lin_factor)
+        atr_breakpoint += min(abs(len_trend)*atr_factor, max_atr_factor)
+
+
+    # can use
+        # linear reg
+        # rsi
+        # over ma (50!) price_ma_diff
+        # ma over ma, 50 & 200 ma trend (or 25, 100 more reactive)
+        # pivot highs & lows, pivot breaking with ll = 10
+    
+    ## get pivot information
+    pivot_signal = pivot_breaking(prcAll, look_length, atr_breakpoint)
+    # long_pivot_signal = pivot_breaking(prcAll, long_look_length, atr_breakpoint)
+    pivot_signals[day] = pivot_signal
+    # long_pivot_signals[day] = long_pivot_signal
+    last_pivot_signal = get_last_privot_position(prcAll, pivot_signals)
+    # last_long_pivot_signal = get_last_privot_position(prcAll, long_pivot_signals)
+    # pivot_signal_changed = pivot_signal != pivot_signals[day-1] if day > 1 else False
+    last_long_pivot_signal = 0
+    pivot_signal_changed = 0
+    long_pivot_signal = 0
+
+    ## get overall trend information
+    # trend_cont = ma_ma_diff(prcAll, 25, 100)
+    trend_cont = linear_reg(prcAll, lin_reg_lookback)
+
+    ## pass data into logic system & save
+    market_signal = market_condition_logic(trend_cont, pivot_signal, last_pivot_signal, long_pivot_signal, last_long_pivot_signal, pivot_signal_changed )
+    market_signals[day] = market_signal
+    return market_signal
 
 def market_condition_test(prices: np.ndarray) -> str:
     """
@@ -412,17 +527,52 @@ def loadPrices(fn):
     (nt,nInst) = df.shape
     return (df.values).T
 
+def show_multi_panel_graph(prcAll, inst_list, smooth=True):
+    """
+    Plot multiple instruments' market conditions in a grid of subplots.
 
-# Master graphing function #
-def show_graph():
+    Parameters:
+    - prcAll: price matrix of shape (nInst, T)
+    - inst_list: list of instrument indices to plot
+    - smooth: whether to apply smoothing in market condition logic
+    """
+    nInst = len(inst_list)
+    ncols = 5  # You can change this depending on your screen layout
+    nrows = math.ceil(nInst / ncols)
 
-    # loading prices into matrix
-    pricesFile="prices.txt"
-    prcAll = loadPrices(pricesFile)
-    for i in range(15):
-        inst = i 
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(5*ncols, 3.5*nrows), squeeze=False)
+    regime_colors = {'bullish': 'green', 'bearish': 'red', 'stagnant': 'gray', 'unknown': 'white'}
 
-        draw_market_condition(prcAll, inst)
+    for idx, inst in enumerate(inst_list):
+        row, col = divmod(idx, ncols)
+        ax = axes[row][col]
+
+        closes = prcAll[inst, :]
+        T = len(closes)
+        regimes = []
+
+        for t in range(T):
+            regime = market_condition_setup(closes[:t+1], smooth)
+            regimes.append(regime)
+
+        regimes_str = [market_name(r) for r in regimes]
+        ax.plot(closes, color='black', linewidth=1.2)
+
+        for t in range(100, T):
+            color = regime_colors.get(regimes_str[t], 'white')
+            ax.axvspan(t - 1, t, color=color, alpha=0.2)
+
+        ax.set_title(f"Instrument {inst}")
+        ax.set_xlabel("Time")
+        ax.set_ylabel("Price")
+
+    # Hide unused subplots
+    for i in range(nInst, nrows * ncols):
+        row, col = divmod(i, ncols)
+        axes[row][col].axis('off')
+
+    plt.tight_layout()
+    plt.show()
 
 # Graphing functions #
 
@@ -442,7 +592,7 @@ def draw_market_condition(prcAll, inst):
     regimes = []
     for t in range(T):
         # market_condition returns + if up trend, - if down, 0 if stagnant
-        regime = market_condition(closes[:t+1])
+        regime = market_condition(closes[:t+1], smooth)
         regimes.append(regime)
 
     # Map regimes to colors
@@ -461,7 +611,7 @@ def draw_market_condition(prcAll, inst):
     ax.set_xlabel("Time (Days)")
     ax.set_ylabel("Price")
 
-    draw_ma(prcAll, inst, 25, 100, ax)
+    # draw_ma(prcAll, inst, 25, 100, ax)
 
     ax.legend()
 
@@ -560,4 +710,55 @@ def draw_adx(prcAll, inst):
     plt.tight_layout()
     plt.show()
 
-show_graph()
+def draw_sar(prcAll, inst, initial_af=0.02, max_af=0.2):
+    """
+    Draws the closing price and corresponding Parabolic SAR approximation.
+
+    Parameters:
+    - prcAll: 2D NumPy array [instruments × time]
+    - inst: index of instrument to plot
+    - initial_af: initial acceleration factor for SAR (default 0.02)
+    - max_af: maximum acceleration factor for SAR (default 0.2)
+    """
+    closes = prcAll[inst, :]
+    sar_vals = parabolic_sar(closes, initial_af=initial_af, max_af=max_af)
+
+    # Determine SAR above/below for styling
+    uptrend = closes > sar_vals
+    downtrend = ~uptrend
+
+    # --- Plotting ---
+    plt.figure(figsize=(12, 6))
+    plt.plot(closes, label='Close Price', color='black')
+
+    # SAR dots for uptrends and downtrends
+    plt.plot(np.where(uptrend, sar_vals, np.nan), marker='.', linestyle='None', color='green', label='SAR (Uptrend)')
+    plt.plot(np.where(downtrend, sar_vals, np.nan), marker='.', linestyle='None', color='red', label='SAR (Downtrend)')
+
+    plt.title("Closing Price with Parabolic SAR (Close-only approximation)")
+    plt.xlabel("Day")
+    plt.ylabel("Price")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+def main(inst_list, smooth):
+    pricesFile="prices.txt"
+    prcAll = loadPrices(pricesFile)
+    # show_multi_panel_graph(prcAll, inst_list, smooth)
+    draw_sar(prcAll, 0, 0.01, 0.05)
+
+## Vars to change for viewing
+# Smoothing between pivot breaking
+smooth = True
+
+inst_range = True 
+(lower_bound, upper_bound) = (10, 30)
+
+if inst_range:
+    inst_list = list(range(lower_bound, upper_bound))
+else:
+    inst_list = [5]
+
+main(inst_list, smooth)

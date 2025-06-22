@@ -16,8 +16,6 @@ sl = None
 tp_ratio = 3
 sl_ratio = 3
 
-
-
 # Template Indicator Starting
 def MachineOrchestra(prcSoFar):
     ### Define vars
