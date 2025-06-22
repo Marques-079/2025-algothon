@@ -54,6 +54,12 @@ def ma(close, period=14, method='sma'):
 
 # Average Directional Index (ADX)
 def adx_from_closes(close, period=14, smooth_n=None):
+    '''
+    ADX is a measure of trend strength, derived from the directional movement indicators (DI).
+    Just shows that if ADX > 25 a trend 'to follow' could be emerging otherwise if <20 could mean no trend (random walk).
+
+    DI can by +/- and is a calculation of the average directional movement over a period.
+    '''
     close = np.asarray(close, dtype=float)
     delta = np.diff(close)
 
@@ -163,6 +169,9 @@ def rsi_ma(close_prices, period=14):
 
 # Average True Range (ATR) (Close-to-Close Volatility approximates this)
 def atr_close_to_close(close_prices, period=14):
+    '''
+    Sum of upwards and downwards price movements over a period. 
+    '''
     close_prices = np.asarray(close_prices)
     abs_differences = np.abs(np.diff(close_prices))
     vol = np.full_like(close_prices, fill_value=np.nan)
@@ -272,6 +281,11 @@ def ma_ma_diff(close_prices, fast, slow):
     return fast_ma[-1] - slow_ma[-1]
 
 def pivot_breaking(prcAll, look_length):
+    '''
+    If the last price is above the previous pivot high + 1 ATR indicates a possible bullish breakout -> Enter long
+    If the last price is below the previous pivot low - 1 ATR indicates a possible bearish breakout -> Enter short
+    If it outputs 0 this may indicate a stagnant market condition, may be a consolidation phase
+    '''
     prev_high = get_latest_pivot_high(prcAll, look_length, look_length)[-1]
     prev_low = get_latest_pivot_low(prcAll, look_length, look_length)[-1]
 
@@ -289,6 +303,7 @@ def pivot_breaking(prcAll, look_length):
     if last_price < prev_low - atr_breakpoint*curr_atr:
         return -1
     return 0
+
 
 def get_last_privot_position(prcAll, look_length):
     global pivot_signals
@@ -353,6 +368,12 @@ def market_condition(prcAll):
         else:
             return last_pivot_signal
     return None 
+'''
+(Related to code above) pivot_signal measures past pivot breaks where the ATR*thrshold > last_price.
+Linear reg (75 window tunable) measures the slope of the last X prices.
+If there is a valid signal != 0 return else return 0 as stagnant
+
+'''
 
     # return pivot_breaking(prcAll, 10)
 
