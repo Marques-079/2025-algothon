@@ -193,7 +193,24 @@ def rsi(close: np.ndarray, window: int) -> np.ndarray:
     
     return rsi.to_numpy()
 
-# Stochastic Oscillator
+# Stochastic Oscillator - computes where % of the price is relative to max and min over last window
+def stochastic_oscillator(close: np.ndarray, window: int = 14) -> np.ndarray:
+    """
+    Computes the Stochastic Oscillator %K using only closing prices.
+    %K = (Close - Min) / (Max - Min), scaled between 0 and 1.
+
+    Parameters:
+    - close: array of closing prices
+    - window: lookback period
+
+    Returns:
+    - %K array (NumPy), values from 0 to 1
+    """
+    close = pd.Series(close)
+    lowest = close.rolling(window).min()
+    highest = close.rolling(window).max()
+    percent_k = (close - lowest) / (highest - lowest)
+    return percent_k.to_numpy()
 
 # Rate of Change (ROC)
 def roc(close: np.ndarray, period: int) -> np.ndarray:
@@ -204,9 +221,24 @@ def roc(close: np.ndarray, period: int) -> np.ndarray:
     """
     return (close / np.roll(close, period)) - 1 if period < len(close) else np.full_like(close, np.nan)
 
-# Commodity Channel Index (CCI)
+# Commodity Channel Index (CCI) - measures price deviation from its average over a period
+def commodity_channel_index(close: np.ndarray, window: int = 20) -> np.ndarray:
+    """
+    Approximates the Commodity Channel Index (CCI) using closing prices only.
+    CCI = (Close - SMA) / (0.015 * Mean Absolute Deviation)
 
-# Williams %R
+    Parameters:
+    - close: array of closing prices
+    - window: lookback period
+
+    Returns:
+    - CCI values (NumPy), centered around 0
+    """
+    close = pd.Series(close)
+    sma = close.rolling(window).mean()
+    mad = close.rolling(window).apply(lambda x: np.mean(np.abs(x - np.mean(x))), raw=True)
+    cci = (close - sma) / (0.015 * mad)
+    return cci.to_numpy()
 
 # ------------------------------------------------------------------------------------------------------ #
 
@@ -225,7 +257,26 @@ def atr_close_to_close(close: np.ndarray, window: int = 14) -> np.ndarray:
     diff = np.abs(np.diff(close, prepend=np.nan))
     return pd.Series(diff).rolling(window).mean().to_numpy()
 # Donchian Channels
+def donchian_channel_percentile(close: np.ndarray, window: int = 20) -> np.ndarray:
+    """
+    Computes the percentile of the current close within the Donchian Channel range.
 
+    Formula:
+    Percentile = (Close - Min) / (Max - Min), scaled from 0 to 1
+
+    Parameters:
+    - close: array of closing prices
+    - window: lookback period for high/low band
+
+    Returns:
+    - Percentile location of close in band (NumPy), values from 0 to 1
+    """
+    close = pd.Series(close)
+    lowest = close.rolling(window).min()
+    highest = close.rolling(window).max()
+    percentile = (close - lowest) / (highest - lowest)
+    return percentile.to_numpy()
+    
 # Keltner Channels
 
 # ------------------------------------------------------------------------------------------------------ #
@@ -745,6 +796,7 @@ def main(inst_list, smooth):
 
 ## Vars to change for viewing
 # Smoothing between pivot breaking
+'''
 smooth = True
 
 inst_range = True 
@@ -756,3 +808,4 @@ else:
     inst_list = [5]
 
 main(inst_list, smooth)
+'''
