@@ -797,6 +797,7 @@ def main(inst_list, smooth):
 
 ## Vars to change for viewing
 # Smoothing between pivot breaking
+'''
 smooth = True
 
 inst_range = True 
@@ -808,3 +809,4 @@ else:
     inst_list = [5]
 
 main(inst_list, smooth)
+'''
