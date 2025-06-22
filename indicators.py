@@ -325,20 +325,22 @@ pivot_signals = np.zeros(1000)
 long_pivot_signals = np.zeros(1000)
 market_signals = np.zeros(1000)
 def market_condition_logic(trend_cont, pivot_signal, last_pivot_signal, long_pivot_signal, last_long_pivot_signal, pivot_signal_changed):
-    if pivot_signal != 0 and not pivot_signal_changed:
-        if pivot_signal == None:
-            return None
-        elif pivot_signal == 1:
-            if long_pivot_signal == 1:
-                return 1
-            else:
-                return 0
+    if pivot_signal != 0:
+        return pivot_signal
+    # if pivot_signal != 0 and not pivot_signal_changed:
+        # if pivot_signal == None:
+        #     return None
+        # elif pivot_signal == 1:
+        #     if long_pivot_signal == 1:
+        #         return 1
+        #     else:
+        #         return 0
 
-        elif pivot_signal == -1:
-            if long_pivot_signal == -1:
-                return -1
-            else:
-                return 0
+        # elif pivot_signal == -1:
+        #     if long_pivot_signal == -1:
+        #         return -1
+        #     else:
+        #         return 0
 
     else:
         if not smooth:
@@ -391,12 +393,15 @@ def market_condition_setup(prcAll, smooth=True):
     
     ## get pivot information
     pivot_signal = pivot_breaking(prcAll, look_length, atr_breakpoint)
-    long_pivot_signal = pivot_breaking(prcAll, long_look_length, atr_breakpoint)
+    # long_pivot_signal = pivot_breaking(prcAll, long_look_length, atr_breakpoint)
     pivot_signals[day] = pivot_signal
-    long_pivot_signals[day] = long_pivot_signal
+    # long_pivot_signals[day] = long_pivot_signal
     last_pivot_signal = get_last_privot_position(prcAll, pivot_signals)
-    last_long_pivot_signal = get_last_privot_position(prcAll, long_pivot_signals)
-    pivot_signal_changed = pivot_signal != pivot_signals[day-1] if day > 1 else False
+    # last_long_pivot_signal = get_last_privot_position(prcAll, long_pivot_signals)
+    # pivot_signal_changed = pivot_signal != pivot_signals[day-1] if day > 1 else False
+    last_long_pivot_signal = 0
+    pivot_signal_changed = 0
+    long_pivot_signal = 0
 
     ## get overall trend information
     # trend_cont = ma_ma_diff(prcAll, 25, 100)
