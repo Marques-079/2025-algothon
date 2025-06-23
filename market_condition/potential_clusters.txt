@@ -5,7 +5,7 @@ Monthly:
 
 13, 44 (and SMA!)
 
-39, 28 (found in fortnightly too! & SMA + 48) 
+39, 28 (found in fortnightly too! & SMA + 48 and , and weekly offset + 48) 
 
 36, 42
 
@@ -19,13 +19,13 @@ Monthly:
 
 18, 38, 41 (18, 38 found in fortnightly too! and in SMA + 19)
 
-Fornightly:
+Fornightly: (0.5 or 0.7 significance)
 
 1, 19
 
 16, 26
 
-30, 31
+30, 31 (by weekly offset too!)
 
 24, 34
 
@@ -37,11 +37,11 @@ Fornightly:
 
 SMA 30:
 
-12, 13, 44
+12, 13, 44 (13 44 by weekly offsetting too!)
 
 29, 35
 
-5, 21
+5, 21 (by weekly too!)
 
 23, 37 (investigate further!)
 
@@ -52,3 +52,10 @@ SMA 30:
 25, 33
 
 2, 30
+
+Weekly index offsetting:
+
+38, 41, 12 (strong!)
+12, 17 (strong!)
+
+35, 19
