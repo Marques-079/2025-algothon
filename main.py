@@ -1,6 +1,7 @@
 import numpy as np
 from InsiderTrading import InsideTrader
-from market_condition.indicators import rsi_exponential, atr_close_to_close
+# Where did rsi_exponential go??
+# from market_condition.indicators import rsi_exponential, atr_close_to_close
 
 from templates.ExampleMain import Baseline
 

@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from StandardTemplate import Trader, export
+from templates.StandardTemplate import Trader, export
 
 def loadPrices(fn):
     df = pd.read_csv(fn, sep='\s+', header=None, index_col=None)
