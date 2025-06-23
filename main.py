@@ -1,8 +1,8 @@
 import numpy as np
 from InsiderTrading import InsideTrader
-from indicators import rsi_exponential, atr_close_to_close
+from market_condition.indicators import rsi_exponential, atr_close_to_close
 
-from ExampleMain import Baseline
+from templates.ExampleMain import Baseline
 
 ##### TODO #########################################
 ### IMPLEMENT 'getMyPosition' FUNCTION #############
