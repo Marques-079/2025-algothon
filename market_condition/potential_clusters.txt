@@ -1,0 +1,54 @@
+Monthly:
+11, 31 (weak?)
+
+35, 45
+
+13, 44 (and SMA!)
+
+39, 28 (found in fortnightly too! & SMA + 48) 
+
+36, 42
+
+20, 26 (weak)
+
+25, 30 (weird)
+
+27, 43
+
+9, 17 (found fortnightly too! and SMA! Investigate further!)
+
+18, 38, 41 (18, 38 found in fortnightly too! and in SMA + 19)
+
+Fornightly:
+
+1, 19
+
+16, 26
+
+30, 31
+
+24, 34
+
+2, 25
+
+37, 48 (anti correlated!)
+
+13, 14
+
+SMA 30:
+
+12, 13, 44
+
+29, 35
+
+5, 21
+
+23, 37 (investigate further!)
+
+42, 49
+
+31, 32
+
+25, 33
+
+2, 30
