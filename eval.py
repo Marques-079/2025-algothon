@@ -11,7 +11,7 @@ dlrPosLimit = 10000
 
 def loadPrices(fn):
     global nt, nInst
-    df=pd.read_csv(fn, sep='\s+', header=None, index_col=None)
+    df=pd.read_csv(fn, sep=r'\s+', header=None, index_col=None)
     (nt,nInst) = df.shape
     return (df.values).T
 

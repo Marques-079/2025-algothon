@@ -256,6 +256,7 @@ def atr_close_to_close(close: np.ndarray, window: int = 14) -> np.ndarray:
     """
     diff = np.abs(np.diff(close, prepend=np.nan))
     return pd.Series(diff).rolling(window).mean().to_numpy()
+
 # Donchian Channels
 def donchian_channel_percentile(close: np.ndarray, window: int = 20) -> np.ndarray:
     """
@@ -792,21 +793,22 @@ def loadPrices(fn):
 def main(inst_list, smooth):
     pricesFile="prices.txt"
     prcAll = loadPrices(pricesFile)
-    # show_multi_panel_graph(prcAll, inst_list, smooth)
-    draw_sar(prcAll, 0, 0.01, 0.05)
+    show_multi_panel_graph(prcAll, inst_list, smooth)
+    # draw_sar(prcAll, 0, 0.01, 0.05)
 
 ## Vars to change for viewing
 # Smoothing between pivot breaking
-'''
-smooth = True
 
-inst_range = True 
-(lower_bound, upper_bound) = (10, 30)
+if __name__ == "__main__":
+    smooth = True
 
-if inst_range:
-    inst_list = list(range(lower_bound, upper_bound))
-else:
-    inst_list = [5]
+    inst_range = False
+    (lower_bound, upper_bound) = (10, 30)
 
-main(inst_list, smooth)
-'''
+    if inst_range:
+        inst_list = list(range(lower_bound, upper_bound))
+    else:
+        inst_list = [39, 27]
+
+
+    main(inst_list, smooth)
