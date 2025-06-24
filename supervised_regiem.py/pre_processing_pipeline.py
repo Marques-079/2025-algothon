@@ -1,11 +1,14 @@
 import numpy as np
 import pandas as pd
-from market_condition.indicators import (
+from indicators_local import (
     rolling_percentile, up_down_streak, sma, ema, macd, adx_from_closes,
     parabolic_sar, rsi, stochastic_oscillator, roc,
     commodity_channel_index, atr_close_to_close,
     donchian_channel_percentile, rolling_std, zscore,
-    linear_reg, pivot_breaking, get_len_of_trend
+    linear_reg, pivot_breaking, get_len_of_trend,
+    rolling_std, sma, bollinger_band_width, bollinger_percent_b,log_returns,
+    rolling_mean_log_returns, rolling_std_log_returns, volatility_ratio,
+    kama, first_derivative, second_derivative,
 )
 
 # Load data
@@ -72,24 +75,19 @@ for inst in price_df.columns:
         'adx_14':        adx_from_closes(prices, period=14),
 
         # — Oscillators
-        'rsi_6':         rsi(prices, window=6),
-        'rsi_9':         rsi(prices, window=9),
         'rsi_14':        rsi(prices, window=14),
         'rsi_21':        rsi(prices, window=21),
 
-        'sto_k_6':       stochastic_oscillator(prices, window=6),
         'sto_k_14':      stochastic_oscillator(prices, window=14),
         'sto_k_21':      stochastic_oscillator(prices, window=21),
 
         # — Volatility
-        'atr_14':        atr_close_to_close(prices, window=14),
         'atr_21':        atr_close_to_close(prices, window=21),
         'std_10':        rolling_std(prices, window=10),
         'std_20':        rolling_std(prices, window=20),
         'std_50':        rolling_std(prices, window=50),
 
         # — Momentum
-        'roc_5':         roc(prices, period=5),
         'roc_10':        roc(prices, period=10),
         'roc_20':        roc(prices, period=20),
         'roc_50':        roc(prices, period=50),
@@ -121,7 +119,6 @@ for inst in price_df.columns:
         'slope_100':     np.full_like(prices, linear_reg(prices, look_back=100)),
 
         # — Price minus SMA
-        'price_minus_sma_12':  prices - sma(prices, window=12),
         'price_minus_sma_26':  prices - sma(prices, window=26),
         'price_minus_sma_50':  prices - sma(prices, window=50),
         'price_minus_sma_100': prices - sma(prices, window=100),
@@ -129,6 +126,33 @@ for inst in price_df.columns:
         # — SMA minus SMA
         'sma_25_100_diff':     sma(prices, window=25)  - sma(prices, window=100),
         'sma_12_26_diff':      sma(prices, window=12)  - sma(prices, window=26),
+
+        'bb_width_30':    bollinger_band_width(prices, window=30),
+        'percent_b_30':   bollinger_percent_b(prices, window=30),
+        'bb_width_100':   bollinger_band_width(prices, window=100),
+        'percent_b_100':  bollinger_percent_b(prices, window=100),
+
+
+        # — Log‐returns & rolling stats (windows aligned with regimes)
+        'log_ret_1':        log_returns(prices, period=1),
+        'lr_mean_30':       rolling_mean_log_returns(prices, window=30),
+        'lr_std_30':        rolling_std_log_returns(prices, window=30),
+        'lr_mean_100':      rolling_mean_log_returns(prices, window=100),
+        'lr_std_100':       rolling_std_log_returns(prices, window=100),
+
+
+        # — Volatility ratio (short vs. long vol)
+        'vol_ratio_30_100': volatility_ratio(prices, short_window=30, long_window=100),
+
+
+        # — Kaufman’s Adaptive MA
+        'kama_30':         kama(prices, window=30),
+        'kama_100':        kama(prices, window=100),
+
+        # — Derivatives
+        'velocity':        first_derivative(prices),
+        'acceleration':    second_derivative(prices),
+
 
         # — Pivot‐break fla
     }
@@ -146,7 +170,7 @@ tab_df.set_index(['inst', 'time'], inplace=True)
 tab_df = tab_df.dropna()
 
 print(tab_df.shape)
-#tab_df.to_csv("features_heavy1.csv")
+tab_df.to_csv("features_heavy2.csv")
 
 
 
