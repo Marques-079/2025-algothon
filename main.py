@@ -1,14 +1,18 @@
 import numpy as np
-from market_condition.indicators import rsi_exponential, atr_close_to_close
+from InsiderTrading import InsideTrader
+# Where did rsi_exponential go??
+# from market_condition.indicators import rsi_exponential, atr_close_to_close
 
 from templates.ExampleMain import Baseline
 
 ##### TODO #########################################
 ### IMPLEMENT 'getMyPosition' FUNCTION #############
 ### TO RUN, RUN 'eval.py' ##########################
+IT = InsideTrader()
+IT.export_trader()
 
 example = Baseline()
-example.export_trader()
+# example.export_trader()
 
 nInst = 50
 currentPos = np.zeros(nInst)
