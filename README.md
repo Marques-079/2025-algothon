@@ -18,3 +18,4 @@ export_trading_funcs()
 
 both of which can be used to export a trader easily
 
+work in progress
