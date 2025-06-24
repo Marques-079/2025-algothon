@@ -17,6 +17,8 @@ If you want a specific instrument parse the instance at the end of the function 
 Note: it is Zero indexed, so first instrument is 0
 Also you will need individual calls to extract labelled data in 1D arrays for every instrument TLDR: use a loop :D
 
+Last thing... You will get back an array of (endpoint - N), because the lookahead must stop early (no data)
+
 short -> Plots all uptrends can be used for a HFT model rather than regiems based
 long -> regiems based model, will hold trends over long periods of time expect a range of 1 - 7 trends over 750 days timeframe
 
