@@ -108,3 +108,18 @@ Checking the Spread
 - 33, 46
 - 13, 4 (wild card!)
 Constructing the Spread!
+
+
+
+
+
+
+
+
+
+
+Mean Reversion Checking:
+
+15, 48, 49 (EXTREMELY CORRELATED!!! 0 P-VALUE OOOOO LETS GO OFJDODSFJFOSDPJ)
+
+8, 40 47
