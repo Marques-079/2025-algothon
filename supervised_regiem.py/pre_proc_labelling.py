@@ -12,7 +12,7 @@ presets = {
     #[Instance, Endpoint, N_steps forward, K_min_trend_length, window, slope_lower, slope_upper]
 
     0 : [5, 750, 10, 27, 6, -0.015, 0.015], #Works well on Range < 12 
-    1 : [7, 750, 10, 35, 2, -0.055, 0.055], #Work well on Range > 12 
+    1 : [7, 750, 10, 10, 2, -0.055, 0.055], #Work well on Range > 12 
     2 : [9, 750, 10, 47, 2, -0.055, 0.055], #Work well on Range > 25
 
 }
