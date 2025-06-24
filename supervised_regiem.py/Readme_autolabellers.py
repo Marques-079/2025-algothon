@@ -8,8 +8,8 @@ from pre_proc_labelling_short import plot_all_regimes_short
 #Work well on Range > 25
 
 #V1
-labels = get_data(1, 10, 600, True)  #(Range setting, Instrument, endpoint, plot graph)
-print(labels)
+#labels = get_data(1, 10, 600, True)  #(Range setting, Instrument, endpoint, plot graph)
+#print(labels)
 
 #V3
 '''
@@ -21,6 +21,7 @@ long -> regiems based model, will hold trends over long periods of time expect a
 
 def example_entry(end_point: int, plot_graph: bool = True, inst: Optional[int] = None) -> None
 '''
-labels = plot_all_regimes_short(750, True, 0)
+#labels = plot_all_regimes_short(750, True, 0)
 
-labels = plot_all_regimes_long(750, True, 0)
+labels = plot_all_regimes_long(500, False, 1)
+print(len(labels))
