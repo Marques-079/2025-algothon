@@ -188,6 +188,5 @@ def plot_all_regimes_long(end_point, plot_graph=True, inst=None):
             plt.tight_layout()
             plt.show()
 
-    # end for inst
-    return
+    return df["regime_final"].values
 
