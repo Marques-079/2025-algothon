@@ -14,7 +14,10 @@ from pre_proc_labelling_short import plot_all_regimes_short
 #V3
 '''
 If you want a specific instrument parse the instance at the end of the function call eg. labels = plot_all_regimes_long(750, True, 42) where 42 is the instance. 
-Note it is Zero indexed, so first instrument is 0
+Note: it is Zero indexed, so first instrument is 0
+Also you will need individual calls to extract labelled data in 1D arrays for every instrument TLDR: use a loop :D
+
+Last thing... You will get back an array of (endpoint - N), because the lookahead must stop early (no data)
 
 short -> Plots all uptrends can be used for a HFT model rather than regiems based
 long -> regiems based model, will hold trends over long periods of time expect a range of 1 - 7 trends over 750 days timeframe
@@ -23,5 +26,4 @@ def example_entry(end_point: int, plot_graph: bool = True, inst: Optional[int] =
 '''
 #labels = plot_all_regimes_short(750, True, 0)
 
-labels = plot_all_regimes_long(500, False, 1)
-print(len(labels))
+labels = plot_all_regimes_long(750, True, 0)
