@@ -797,16 +797,16 @@ def main(inst_list, smooth):
 
 ## Vars to change for viewing
 # Smoothing between pivot breaking
-'''
-smooth = True
 
-inst_range = True 
-(lower_bound, upper_bound) = (10, 30)
+if __name__ == "__main__":
+    smooth = True
 
-if inst_range:
-    inst_list = list(range(lower_bound, upper_bound))
-else:
-    inst_list = [5]
+    inst_range = True 
+    (lower_bound, upper_bound) = (10, 30)
 
-main(inst_list, smooth)
-'''
+    if inst_range:
+        inst_list = list(range(lower_bound, upper_bound))
+    else:
+        inst_list = [5]
+
+    main(inst_list, smooth)
