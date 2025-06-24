@@ -160,7 +160,7 @@ def plot_all_regimes_short(end_point, plot_graph = True, inst = None):
             ax.set_ylabel("Price")
             ax.legend()
             plt.tight_layout()
-            plt.show()     # <-- ensures each fig renders in Jupyter
+            plt.show()    
 
-    return  # nothing, or you could return a dict of arrays if you like
+    return df["regime_final"].values
 
