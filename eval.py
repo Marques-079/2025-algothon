@@ -63,7 +63,7 @@ def calcPL(prcHist, numTestDays):
 
 
 
-(meanpl, ret, plstd, sharpe, dvol) = calcPL(prcAll,200)
+(meanpl, ret, plstd, sharpe, dvol) = calcPL(prcAll,500)
 score = meanpl - 0.1*plstd
 print ("=====")
 print ("mean(PL): %.1lf" % meanpl)

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import pickle
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -585,6 +586,8 @@ def show_multi_panel_graph(prcAll, inst_list, smooth=True):
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(5*ncols, 3.5*nrows), squeeze=False)
     regime_colors = {'bullish': 'green', 'bearish': 'red', 'stagnant': 'gray', 'unknown': 'white'}
 
+    all_regimes = []
+
     for idx, inst in enumerate(inst_list):
         row, col = divmod(idx, ncols)
         ax = axes[row][col]
@@ -608,6 +611,8 @@ def show_multi_panel_graph(prcAll, inst_list, smooth=True):
         ax.set_xlabel("Time")
         ax.set_ylabel("Price")
 
+        all_regimes.append(regimes)
+
     # Hide unused subplots
     for i in range(nInst, nrows * ncols):
         row, col = divmod(i, ncols)
@@ -615,6 +620,8 @@ def show_multi_panel_graph(prcAll, inst_list, smooth=True):
 
     plt.tight_layout()
     plt.show()
+
+    return all_regimes
 
 # Graphing functions #
 
@@ -795,7 +802,12 @@ def loadPrices(fn):
 def main(inst_list, smooth):
     pricesFile="prices.txt"
     prcAll = loadPrices(pricesFile)
-    show_multi_panel_graph(prcAll, inst_list, smooth)
+    df = show_multi_panel_graph(prcAll, inst_list, smooth)
+
+
+    # Save everything to a file!!!
+    with open("all_regimes_handmade.pkl", "wb") as f:
+        pickle.dump(df, f)
     # draw_sar(prcAll, 0, 0.01, 0.05)
 
 ## Vars to change for viewing
@@ -804,13 +816,12 @@ def main(inst_list, smooth):
 if __name__ == "__main__":
     smooth = True
 
-    inst_range = False
-    (lower_bound, upper_bound) = (10, 30)
+    inst_range = True
+    (lower_bound, upper_bound) = (0, 50)
 
     if inst_range:
         inst_list = list(range(lower_bound, upper_bound))
     else:
         inst_list = [39, 27]
-
 
     main(inst_list, smooth)

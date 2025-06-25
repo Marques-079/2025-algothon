@@ -703,19 +703,19 @@ class Backtester:
         ]
         prices: ndarray = np.array(prices_list)
 
-        # Get an ndarray of days
+        # get an ndarray of days
         days: ndarray = np.arange(backtester_results["start_day"] - 1,
             backtester_results["end_day"])
 
-        # Get buys and sells
-        instrument_trades: List[List[Trade]] = [
+        # get buys and sells
+        instrument_trades: list[list[trade]] = [
             backtester_results["trades"][instrument_no] for instrument_no in range(0, 50)
         ]
 
-        buy_entry_prices: List[List[float]] = [[] for i in range(0, 50)]
-        buy_entry_days: List[List[int]] = [[] for i in range(0, 50)]
-        sell_entry_prices: List[List[float]] = [[] for i in range(0, 50)]
-        sell_entry_days: List[List[int]] = [[] for i in range(0, 50)]
+        buy_entry_prices: list[list[float]] = [[] for i in range(0, 50)]
+        buy_entry_days: list[list[int]] = [[] for i in range(0, 50)]
+        sell_entry_prices: list[list[float]] = [[] for i in range(0, 50)]
+        sell_entry_days: list[list[int]] = [[] for i in range(0, 50)]
 
         for instrument_no in range(0, 50):
             for trade in instrument_trades[instrument_no]:
@@ -726,22 +726,24 @@ class Backtester:
                     sell_entry_prices[instrument_no].append(trade["price_entry"])
                     sell_entry_days[instrument_no].append(trade["day"])
 
-        # Plot each instrument's price and entries
+        # plot each instrument's price and entries
         fig, ax = plt.subplots(figsize=(14, 6))
-        instrument_no = 0
 
-        # Plot Price
+        # CHANGE HERE INSTRUMENT!
+        instrument_no = 49
+
+        # plot price
         line, = ax.plot(
             days,
             prices[instrument_no],
             color="blue",
             linestyle="--",
             linewidth=2,
-            label="Instrument Price",
+            label="instrument price",
             zorder=1,
         )
-        ax.set_xlabel("Days", fontsize=10)
-        ax.set_ylabel("Price ($)", fontsize=10)
+        ax.set_xlabel("days", fontsize=10)
+        ax.set_ylabel("price ($)", fontsize=10)
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
 
