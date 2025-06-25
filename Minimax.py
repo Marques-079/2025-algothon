@@ -13,6 +13,7 @@ class KDEAnalyzer:
         self.window_size = window_size
         self.KDE = None
         self.Grid = None
+        self.lDensity = []
     
     def kde(self, past_prices:np.ndarray,t: int):
         past_prices = past_prices[max(0,t-self.window_size):t+1]
@@ -25,7 +26,17 @@ class KDEAnalyzer:
         self.KDE = kde
         self.Grid = _price_grid
         density = kde(_price_grid)
-        return density / np.sum(density)
+        density /= np.sum(density)
+        self.lDensity = density
+        return density
+    
+    def mean(self):
+        self.m = np.trapz(self.lDensity*self.Grid)
+        return self.m
+    
+    def std(self):
+        self.Var = np.trapz(np.pow( self.Grid-self.mean(),2 )*self.lDensity)
+        return np.sqrt(self.Var)
 
 
 class mmx(Trader):
@@ -51,6 +62,9 @@ class ZScoreReversion(Trader):
         super().__init__()
         self.lookback = lookback
         self.first = True
+        self.analyzers: list[KDEAnalyzer] = []
+        for _ in range(50):
+            self.analyzers.append(KDEAnalyzer())
 
     def sigmoid(self,x):
         return 1 / (1 + np.exp(-x))
@@ -99,11 +113,10 @@ class ZScoreReversion(Trader):
 
         for i in range(50):
             priceArray = prcSoFar[i,:]
-            a = KDEAnalyzer()
+            a = self.analyzers[i]
             density = np.array( a.kde(priceArray,t) )
-            mean = np.trapz(density*a.Grid)
-            Var = np.trapz(np.pow( a.Grid-mean,2 )*density)
-            std = np.sqrt(Var)
+            std = a.std()
+            mean = a.m
             if std > 2:
                 anoms.append(i)
                 diff = lp[i]-mean
