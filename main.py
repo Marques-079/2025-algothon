@@ -2,21 +2,22 @@ import numpy as np
 from InsiderTrading import InsideTrader
 # Where did rsi_exponential go??
 # from market_condition.indicators import rsi_exponential, atr_close_to_close
-from NN import NN
 
+import Minimax
 from templates.ExampleMain import Baseline
 
 ##### TODO #########################################
 ### IMPLEMENT 'getMyPosition' FUNCTION #############
 ### TO RUN, RUN 'eval.py' ##########################
 IT = InsideTrader()
-IT.export_trader()
+# IT.export_trader()
 
-# example = Baseline()
+example = Baseline()
 # example.export_trader()
 
-nn = NN()
-nn.export_trader()
+mmx = Minimax.mmx()
+mmx.export_trader()
+
 
 nInst = 50
 currentPos = np.zeros(nInst)
