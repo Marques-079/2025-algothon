@@ -4,6 +4,7 @@ from scipy.stats import norm
 from scipy.stats import norm
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
+from matplotlib import cm
 import pandas as pd
 
 class PriceForecastDensityPlotter:
@@ -16,7 +17,7 @@ class PriceForecastDensityPlotter:
     
         pmin, pmax = np.min(self.prices), np.max(self.prices)
         padding = (pmax - pmin) * 0.1
-        self.fine_price_grid = np.linspace(pmin - padding, pmax + padding, self.fine_grid_size)
+        self.fine_price_grid = np.linspace(pmin - padding, pmax + padding, 500)
 
     def _init_price_grid(self):
         pmin, pmax = np.min(self.prices), np.max(self.prices)
@@ -112,8 +113,17 @@ class PriceForecastDensityPlotter:
 
     def plot_density_heatmap(self, density_matrix):
         t = np.linspace(1, len(self.prices), len(self.prices))
+
+        f,ax = plt.subplots(subplot_kw={"projection":"3d"})
+        price_bins, time_steps = density_matrix.shape
+        # Create meshgrid for plotting
+        time_grid = np.arange(time_steps)
+        price_grid = self.fine_price_grid
+        T, P = np.meshgrid(time_grid, price_grid)
+        surf = ax.plot_surface(T, P, density_matrix, cmap=cm.coolwarm)
+
         plt.figure(figsize=(10, 6))
-        plt.plot(t,self.prices,color="orange",linestyle="--",marker='o')
+        # plt.plot(t,self.prices,color="orange",linestyle="--",marker='o')
         plt.imshow(
             density_matrix,
             aspect='auto',
@@ -142,7 +152,7 @@ def loadPrices(fn):
 
 prices = loadPrices("prices.txt")
 focus_length = 750
-instrument = prices[21][:focus_length].to_numpy()  # limit to 750 samples if larger
+instrument = prices[0][:focus_length].to_numpy()  # limit to 750 samples if larger
 
 # Sample usage
 prices = instrument  # Simulated price series
