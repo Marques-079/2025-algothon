@@ -16,7 +16,10 @@ example = Baseline()
 # example.export_trader()
 
 mmx = Minimax.mmx()
-mmx.export_trader()
+# mmx.export_trader()
+
+zrv = Minimax.ZScoreReversion()
+zrv.export_trader()
 
 
 nInst = 50
