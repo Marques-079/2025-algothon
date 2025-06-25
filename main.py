@@ -26,6 +26,8 @@ with open("market_condition/mean_reversion_params.pkl", "rb") as f:
 beta_matrix = data["beta_matrix"]
 alpha_matrix = data["alpha_matrix"]
 pairs = data["pairs"]
+if __name__ == "__main__":
+    print(pairs)
 
 # Initialize trader
 MV = MeanReversionTrader(pairs, beta_matrix, alpha_matrix)
