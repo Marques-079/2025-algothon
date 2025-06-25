@@ -32,7 +32,7 @@ class Baseline(Trader):
         if self.first:
             self.first = False
             return lpmax
-        kernel = np.array([-1,1])  #profit kernel
+        kernel = np.array([1,-1])  #profit kernel
         convolved_array = np.zeros((nInst,t))
         for i in range(50):
             convolved_array[i,:] = np.convolve(prcSoFar[i,:], kernel, mode='same')  # or 'same', 'full'
@@ -53,7 +53,7 @@ class Baseline(Trader):
         index_delta = d_dist.sum()/n
         index_delta/=abs(index_delta)
 
-        r = -index_delta*lpmax
+        r = index_delta*lpmax
         return r
 
 # Uncomment below 
