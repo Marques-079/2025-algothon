@@ -812,5 +812,11 @@ if __name__ == "__main__":
     else:
         inst_list = [39, 27]
 
+    import pickle
+
+    # Load the parameters
+    with open("all_regimes.pkl", "rb") as f:
+        data = pickle.load(f)
+
 
     main(inst_list, smooth)
