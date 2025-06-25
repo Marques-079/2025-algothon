@@ -98,7 +98,7 @@ class PriceForecastDensityPlotter:
             sigma2 = (1 - K) * sigma2
 
             # === Kalman predict next ===
-            mu_pred = ( z + mu ) /2
+            mu_pred = mu
             sigma2_pred = sigma2 + Q
 
             # Evaluate predicted Gaussian over fine price grid
