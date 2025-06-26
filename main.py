@@ -1,6 +1,7 @@
 import numpy as np
 from InsiderTrading import InsideTrader
 from BestLastAlg import ChooseBestLastBar
+from superiorBaseline import superiorBaseline
 from templates.ExampleMain import Baseline
 from MeanReversionAlg import MeanReversionTrader  # if it's in a separate file
 import pickle
@@ -32,4 +33,7 @@ pairs = [pairs[-1]]
 
 # Initialize trader
 MV = MeanReversionTrader(pairs, beta_matrix, alpha_matrix)
-MV.export_trader()
+# MV.export_trader()
+
+sbase = superiorBaseline()
+sbase.export_trader()
