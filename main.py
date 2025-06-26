@@ -3,7 +3,6 @@ from InsiderTrading import InsideTrader
 # Where did rsi_exponential go??
 # from market_condition.indicators import rsi_exponential, atr_close_to_close
 
-import Minimax
 from templates.ExampleMain import Baseline
 
 ##### TODO #########################################
@@ -14,13 +13,6 @@ IT = InsideTrader()
 
 example = Baseline()
 # example.export_trader()
-
-mmx = Minimax.mmx()
-# mmx.export_trader()
-
-zrv = Minimax.ZScoreReversion()
-zrv.export_trader()
-
 
 nInst = 50
 currentPos = np.zeros(nInst)
