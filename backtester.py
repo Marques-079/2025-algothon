@@ -18,6 +18,9 @@ END_DAY: int = 0
 INSTRUMENT_POSITION_LIMIT: int = 10000
 COMMISSION_RATE: float = 0.0005
 NUMBER_OF_INSTRUMENTS: int = 50
+## For training use Train, when doing testing do TestOnly or Test. ONLY ONCE WE HAVE ALL MODELS ASSEMBLED DO WE USE **VAL** or **VALONLY**
+TESTING_RANGE = 'TestOnly'
+INSTRUMENT_NUMBER = 49
 
 PLOT_COLORS: Dict[str, str] = {
     "pnl": "#2ca02c",
@@ -26,6 +29,7 @@ PLOT_COLORS: Dict[str, str] = {
     "sharpe_change": "#d62728",
 }
 
+range_dict = {"Train": (0, 449), "Test": (0, 599), "TestOnly": (450, 599), "Val": (0, 750), "ValOnly": (600, 750)}
 default_strategy_filepath: str = "./main.py"
 default_strategy_function_name: str = "getMyPosition"
 strategy_file_not_found_message: str = "Strategy file not found"
@@ -129,6 +133,7 @@ class Params:
 def parse_command_line_args() -> Params:
     total_args: int = len(sys.argv)
     params: Params = Params()
+    params.start_day, params.end_day = range_dict[TESTING_RANGE]
 
     if total_args > 1:
         i: int = 1
@@ -730,7 +735,7 @@ class Backtester:
         fig, ax = plt.subplots(figsize=(14, 6))
 
         # CHANGE HERE INSTRUMENT!
-        instrument_no = 49
+        instrument_no = INSTRUMENT_NUMBER
 
         # plot price
         line, = ax.plot(
