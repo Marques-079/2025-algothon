@@ -816,7 +816,7 @@ def main(inst_list, smooth):
 if __name__ == "__main__":
     smooth = True
 
-    inst_range = True
+    inst_range = False
     (lower_bound, upper_bound) = (0, 50)
 
     if inst_range:
