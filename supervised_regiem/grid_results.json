@@ -1,0 +1,98 @@
+[
+  {
+    "batch_size": 64,
+    "dropout": 0.1,
+    "hidden_dim": 64,
+    "lr": 0.001,
+    "num_layers": 1,
+    "test_acc": 0.770126582278481
+  },
+  {
+    "batch_size": 64,
+    "dropout": 0.1,
+    "hidden_dim": 64,
+    "lr": 0.001,
+    "num_layers": 2,
+    "test_acc": 0.7374683544303797
+  },
+  {
+    "batch_size": 64,
+    "dropout": 0.1,
+    "hidden_dim": 64,
+    "lr": 0.001,
+    "num_layers": 3,
+    "test_acc": 0.7526582278481012
+  },
+  {
+    "batch_size": 64,
+    "dropout": 0.1,
+    "hidden_dim": 64,
+    "lr": 0.001,
+    "num_layers": 4,
+    "test_acc": 0.739493670886076
+  },
+  {
+    "batch_size": 64,
+    "dropout": 0.1,
+    "hidden_dim": 64,
+    "lr": 0.0005,
+    "num_layers": 1,
+    "test_acc": 0.7463291139240507
+  },
+  {
+    "batch_size": 64,
+    "dropout": 0.1,
+    "hidden_dim": 64,
+    "lr": 0.0005,
+    "num_layers": 2,
+    "test_acc": 0.7002531645569621
+  },
+  {
+    "batch_size": 64,
+    "dropout": 0.1,
+    "hidden_dim": 64,
+    "lr": 0.0005,
+    "num_layers": 3,
+    "test_acc": 0.7658227848101266
+  },
+  {
+    "batch_size": 64,
+    "dropout": 0.1,
+    "hidden_dim": 64,
+    "lr": 0.0005,
+    "num_layers": 4,
+    "test_acc": 0.7825316455696203
+  },
+  {
+    "batch_size": 64,
+    "dropout": 0.1,
+    "hidden_dim": 64,
+    "lr": 0.0001,
+    "num_layers": 1,
+    "test_acc": 0.7615189873417721
+  },
+  {
+    "batch_size": 64,
+    "dropout": 0.1,
+    "hidden_dim": 64,
+    "lr": 0.0001,
+    "num_layers": 2,
+    "test_acc": 0.7610126582278481
+  },
+  {
+    "batch_size": 64,
+    "dropout": 0.1,
+    "hidden_dim": 64,
+    "lr": 0.0001,
+    "num_layers": 3,
+    "test_acc": 0.7827848101265823
+  },
+  {
+    "batch_size": 64,
+    "dropout": 0.1,
+    "hidden_dim": 64,
+    "lr": 0.0001,
+    "num_layers": 4,
+    "test_acc": 0.7734177215189874
+  }
+]
