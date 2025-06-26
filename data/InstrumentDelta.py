@@ -26,8 +26,8 @@ class Analyzer_inst_delta:
         posDelta = np.where(pdiff > 0,pdiff,0)
         negDelta = np.where(pdiff < 0,-pdiff,0)
 
-        self.netPos[:,t] = posDelta.sum(axis=1)
-        self.netNeg[:,t] = negDelta.sum(axis=1)
+        self.netPos[:,t-1] = posDelta.sum(axis=1)
+        self.netNeg[:,t-1] = negDelta.sum(axis=1)
     
     def getTopBottomK(self):
         gdList = []
