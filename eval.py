@@ -9,6 +9,17 @@ nt = 0
 commRate = 0.0005
 dlrPosLimit = 10000
 
+### OPTIONS
+# Train 0-449
+# Test 0-599
+# TestOnly 450-599
+# Val 0-750
+# ValOnly 600-750
+range_dict = {"Train": (0, 449), "Test": (0, 599), "TestOnly": (450, 599), "Val": (0, 750), "ValOnly": (600, 750)}
+
+## For training use Train, when doing testing do TestOnly or Test. ONLY ONCE WE HAVE ALL MODELS ASSEMBLED DO WE USE **VAL** or **VALONLY**
+TestingRange = 'TestOnly'
+
 def loadPrices(fn):
     global nt, nInst
     df=pd.read_csv(fn, sep=r'\s+', header=None, index_col=None)
@@ -19,7 +30,7 @@ pricesFile="prices.txt"
 prcAll = loadPrices(pricesFile)
 print ("Loaded %d instruments for %d days" % (nInst, nt))
 
-def calcPL(prcHist, numTestDays):
+def calcPL(prcHist, startDay, endDay):
     cash = 0
     curPos = np.zeros(nInst)
     totDVolume = 0
@@ -27,8 +38,7 @@ def calcPL(prcHist, numTestDays):
     value = 0
     todayPLL = []
     (_,nt) = prcHist.shape
-    startDay = nt + 1 - numTestDays
-    for t in range(startDay, nt+1):
+    for t in range(startDay+1, endDay+1):
         prcHistSoFar = prcHist[:,:t]
         curPrices = prcHistSoFar[:,-1]
         if (t < nt):
@@ -63,7 +73,7 @@ def calcPL(prcHist, numTestDays):
 
 
 
-(meanpl, ret, plstd, sharpe, dvol) = calcPL(prcAll,500)
+(meanpl, ret, plstd, sharpe, dvol) = calcPL(prcAll,*range_dict[TestingRange])
 score = meanpl - 0.1*plstd
 print ("=====")
 print ("mean(PL): %.1lf" % meanpl)
