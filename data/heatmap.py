@@ -14,7 +14,7 @@ class PriceForecastDensityPlotter:
         self.time_steps = len(prices) - window_size
         self.price_grid = price_grid or self._init_price_grid()
         self.fine_grid_size = 750
-    
+   
         pmin, pmax = np.min(self.prices), np.max(self.prices)
         padding = (pmax - pmin) * 0.1
         self.fine_price_grid = np.linspace(pmin - padding, pmax + padding, 500)
@@ -41,20 +41,6 @@ class PriceForecastDensityPlotter:
         pdf = np.exp(gmm.score_samples(self.fine_price_grid.reshape(-1, 1)))
         pdf /= np.sum(pdf)  # normalize
         return pdf
-
-    def build_density_matrix_gmm(self, window_size=40, n_components=2):
-        density_matrix = []
-        for t in range(2, self.time_steps + 1):
-            start = max(0, t - window_size)
-            past_window = self.prices[start:t]
-            density = self.forecast_density_gmm(past_window, n_components=n_components)
-            density_matrix.append(density)
-        return np.array(density_matrix).T
-
-    def run_gmm(self, window_size=40, n_components=2):
-        density_matrix = self.build_density_matrix_gmm(window_size=window_size, n_components=n_components)
-        self.plot_density_heatmap(density_matrix)
-
 
     def forecast_density_kde(self, past_prices):
         """
@@ -111,18 +97,19 @@ class PriceForecastDensityPlotter:
         return np.array(density_matrix).T  # shape: [price_bins, time_steps]
 
 
-    def plot_density_heatmap(self, density_matrix):
+    def plot_density_heatmap(self,i, density_matrix, name=""):
         t = np.linspace(1, len(self.prices), len(self.prices))
 
-        f,ax = plt.subplots(subplot_kw={"projection":"3d"})
-        price_bins, time_steps = density_matrix.shape
-        # Create meshgrid for plotting
-        time_grid = np.arange(time_steps)
-        price_grid = self.fine_price_grid
-        T, P = np.meshgrid(time_grid, price_grid)
-        surf = ax.plot_surface(T, P, density_matrix, cmap=cm.coolwarm)
+        # f,ax = plt.subplots(subplot_kw={"projection":"3d"})
+        # price_bins, time_steps = density_matrix.shape
+        # # Create meshgrid for plotting
+        # time_grid = np.arange(time_steps)
+        # price_grid = self.fine_price_grid
+        # T, P = np.meshgrid(time_grid, price_grid)
+        # surf = ax.plot_surface(T, P, density_matrix, cmap=cm.coolwarm)
 
-        plt.figure(figsize=(10, 6))
+        plt.figure(i,figsize=(10, 6))
+        plt.suptitle(f"Inst {i}")
         # plt.plot(t,self.prices,color="orange",linestyle="--",marker='o')
         plt.imshow(
             density_matrix,
@@ -134,27 +121,12 @@ class PriceForecastDensityPlotter:
         plt.colorbar(label='Density')
         plt.xlabel('Time')
         plt.ylabel('Price')
-        plt.title('Forecasted Price Density Over Time')
-        plt.show()
+        plt.title(name)
 
-    def run_kde(self, window_size=20):
+    def run_kde(self,i, window_size=20):
         density_matrix = self.build_density_matrix_kde(window_size=window_size)
-        self.plot_density_heatmap(density_matrix)
+        self.plot_density_heatmap(i,density_matrix,"KDE density heatmap")
     
-    def run_kalman(self, temperature=1.0):
+    def run_kalman(self,i, temperature=1.0):
         density_matrix = self.forecast_density_kalman(temperature=temperature)
-        self.plot_density_heatmap(density_matrix)
-
-
-def loadPrices(fn):
-    df = pd.read_csv(fn, sep='\s+', header=None, index_col=None)
-    return df
-
-prices = loadPrices("prices.txt")
-focus_length = 750
-instrument = prices[0][:focus_length].to_numpy()  # limit to 750 samples if larger
-
-# Sample usage
-prices = instrument  # Simulated price series
-plotter = PriceForecastDensityPlotter(prices)
-plotter.run_kde()
+        self.plot_density_heatmap(i,density_matrix,"Kalman density")
