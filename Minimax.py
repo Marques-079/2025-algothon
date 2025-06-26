@@ -107,23 +107,7 @@ class ZScoreReversion(Trader):
             self.first = False
             return lpmax
 
-        R = np.full(50,0)
-        anoms = []
-        anomDiff = []
-
-        for i in range(50):
-            priceArray = prcSoFar[i,:]
-            a = self.analyzers[i]
-            density = np.array( a.kde(priceArray,t) )
-            std = a.std()
-            mean = a.m
-            if std > 2:
-                anoms.append(i)
-                diff = lp[i]-mean
-                diff /= abs(diff)
-                anomDiff.append(diff)
-                R[i] = -diff
-        print(t,anoms,np.array(anomDiff))
-
-            
+        R = np.full(50, self.market_trend(prcSoFar) )
+        R[[42, 26, 15, 31, 29, 18, 17, 23, 7, 41]] = 1
+        R[[47, 4, 1, 8, 0, 43, 25, 6, 37, 33]] = -1
         return R*lpmax
