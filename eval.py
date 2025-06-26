@@ -15,7 +15,7 @@ dlrPosLimit = 10000
 # TestOnly 450-599
 # Val 0-750
 # ValOnly 600-750
-range_dict = {"Train": (0, 449), "Test": (0, 599), "TestOnly": (450, 599), "Val": (0, 750), "ValOnly": (600, 750)}
+range_dict = {"Train": (1, 449), "Test": (1, 599), "TestOnly": (450, 599), "Val": (1, 750), "ValOnly": (600, 750)}
 
 ## For training use Train, when doing testing do TestOnly or Test. ONLY ONCE WE HAVE ALL MODELS ASSEMBLED DO WE USE **VAL** or **VALONLY**
 TestingRange = 'TestOnly'
