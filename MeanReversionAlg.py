@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import math
 from templates.StandardTemplate import Trader, export
+import matplotlib.pyplot as plt
 
 class MeanReversionTrader(Trader):
     def __init__(self, pairs, beta_matrix, alpha_matrix, z_entry=2, z_exit=0.5):
@@ -33,8 +34,11 @@ class MeanReversionTrader(Trader):
         Returns:
             positions (ndarray): shape (n_instruments,), position for each instrument
         """
+
         n_instruments = price_history.shape[0]
         positions = np.zeros(n_instruments)
+
+        print(price_history.shape)
 
         if price_history.shape[1] < 30:
             return positions  # Not enough data yet
@@ -77,13 +81,29 @@ class MeanReversionTrader(Trader):
         return self.positions
 
 
-    # def run(self, prc_matrix):
-    #     T = prc_matrix.shape[1]
-    #     for t in range(T):
-    #         self.step(prc_matrix, t)
+    def run(self, prc_matrix):
+        T = prc_matrix.shape[1]
+        for t in range(T):
+            self.step(prc_matrix[:, :t])
 
-    # def get_trade_log(self):
-    #     return pd.DataFrame(self.trades, columns=["Day", "Asset A", "Asset B", "Action", "Z-Score"])
+    def get_trade_log(self):
+        return pd.DataFrame(self.trades, columns=["Day", "Asset A", "Asset B", "Action", "Z-Score"])
 
-    # def current_positions(self):
-    #     return {pair: pos for pair, pos in self.positions.items() if pos != 0}
+    def plot_spread(self):
+        plt.figure(figsize=(10, 4))
+        plt.plot(self.spread_log, label="Spread Z-Score")
+        plt.axhline(self.z_entry, color='red', linestyle='--', label='Entry Threshold')
+        plt.axhline(-self.z_entry, color='red', linestyle='--')
+        plt.axhline(self.z_exit, color='green', linestyle='--', label='Exit Threshold')
+        plt.axhline(-self.z_exit, color='green', linestyle='--')
+        plt.axhline(0, color='black', linestyle=':')
+        plt.title("Z-Score of Spread Over Time")
+        plt.xlabel("Time Step")
+        plt.ylabel("Z-Score")
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+
+    def current_positions(self):
+        return {pair: pos for pair, pos in self.positions.items() if pos != 0}
