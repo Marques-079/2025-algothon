@@ -11,6 +11,15 @@ class superiorBaseline(Trader):
         self.lookback = [0]*50
         self.LBpenalty = [[0,0]]*50
         self.PLTable = np.zeros((self.nInst,1000))
+        
+        # A rest occurs when there is significant disagreement with market trend
+        # and a instrument's observed trend
+        
+        # When a rest occurs how far in time should it look back to
+        self.lookbackResetAmnt = 5
+        
+        #accuracy: how often should the market trend correlate with the instrument trend
+        self.acc_target = 0.1
     
     @export
     def position(self,prcSoFar: np.ndarray):
@@ -35,19 +44,14 @@ class superiorBaseline(Trader):
 
         self.PLTable[:,t] = lPrice-pPrice 
         Ws,Ls = self.rankedCumulativeWinLoss(t)
-        print(t,Ws,Ls)
         for win in Ws:
-            self.updatePenaltyTable(win,t,position[win],1)
-
-            accuracy = 1 - self.LBpenalty[win][0] / self.LBpenalty[win][1]
-            if accuracy > 0.7:
+            accuracy = self.updatePenaltyTable(win,t,position[win],1)
+            if accuracy > self.acc_target:
                 position[win] = 1
 
         for loss in Ls:
-            self.updatePenaltyTable(loss,t,position[loss],-1)
-
-            accuracy = 1 - self.LBpenalty[loss][0] / self.LBpenalty[loss][1]
-            if accuracy > 0.7:
+            accuracy = self.updatePenaltyTable(loss,t,position[loss],-1)
+            if accuracy > self.acc_target:
                 position[loss] = -1
 
         
@@ -60,14 +64,15 @@ class superiorBaseline(Trader):
     def updatePenaltyTable(self,instrument:int,t:int, current_pos:int, intended_pos:int):
         if current_pos != intended_pos:
             self.LBpenalty[instrument][0] += 1
-        else:
-            self.LBpenalty[instrument][0] -= 1
         self.LBpenalty[instrument][1] += 1
         
         # Rest table if threshold exceeded
-        if self.LBpenalty[instrument][0] > 10:
-            self.lookback[instrument] = t-10
+        accuracy = 1 - self.LBpenalty[instrument][0] / self.LBpenalty[instrument][1]
+        if accuracy < self.acc_target and self.LBpenalty[instrument][1] > 0:
+            self.lookback[instrument] = t-self.lookbackResetAmnt
             self.LBpenalty[instrument] = [0,0]
+
+        return accuracy
     
     def rankedCumulativeWinLoss(self,t:int):
         Llist = []
