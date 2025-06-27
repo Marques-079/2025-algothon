@@ -18,7 +18,7 @@ dlrPosLimit = 10000
 range_dict = {"Train": (0, 449), "Test": (0, 599), "TestOnly": (450, 599), "Val": (0, 750), "ValOnly": (600, 750)}
 
 ## For training use Train, when doing testing do TestOnly or Test. ONLY ONCE WE HAVE ALL MODELS ASSEMBLED DO WE USE **VAL** or **VALONLY**
-TestingRange = 'TestOnly'
+TestingRange = 'Test'
 
 def loadPrices(fn):
     global nt, nInst

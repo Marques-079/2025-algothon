@@ -70,7 +70,7 @@ class MeanReversionTrader(Trader):
             self.raw_spread_log[day] = latest_spread
 
             active = self.active_positions.get((i, j), 0)
-            max_pos = math.floor( ((self.max_hold / max(abs(beta), 1)) / max(latest_prices[i], latest_prices[j]))* 0.95) 
+            max_pos = math.floor(min(self.max_hold / latest_prices[i], self.max_hold / (latest_prices[j]*abs(beta)))*0.95)
             if active == 0:
                 if z_score > self.z_entry:
                     self.positions[i] = -1 * max_pos

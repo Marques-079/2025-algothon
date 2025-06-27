@@ -28,7 +28,6 @@ alpha_matrix = data["alpha_matrix"]
 pairs = data["pairs"]
 if __name__ == "__main__":
     print(pairs)
-pairs = [pairs[-1]]
 
 # Initialize trader
 MV = MeanReversionTrader(pairs, beta_matrix, alpha_matrix)
