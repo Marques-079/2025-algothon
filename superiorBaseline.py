@@ -7,6 +7,9 @@ class superiorBaseline(Trader):
         self.first = True
         
         self.nInst = 50
+        self.K = 3
+        self.lookback = [0]*50
+        self.LBpenalty = [[0,0]]*50
         self.PLTable = np.zeros((self.nInst,1000))
     
     @export
@@ -18,34 +21,80 @@ class superiorBaseline(Trader):
 
         if self.first:
             self.first = False
+            for i in range(1,t):
+                pp = prcSoFar[:,i-1]
+                lp = prcSoFar[:,i]
+                diff = lp-pp
+                self.PLTable[:,i]  = diff + self.PLTable[:,i-1]
             return posMax
         
         pPrice = prcSoFar[:,-2]
-        self.PLTable[:,t] = self.getProfitLoss(lPrice,pPrice) + self.PLTable[:,t-1]
-        self.rankedCumulativeWinLoss()
-        
+
         marketTrend = self.getMarketTrend(prcSoFar)
         position = np.full(50,marketTrend)
+
+        self.PLTable[:,t] = lPrice-pPrice 
+        Ws,Ls = self.rankedCumulativeWinLoss(t)
+        print(t,Ws,Ls)
+        for win in Ws:
+            if position[win] != 1:
+                self.LBpenalty[win][0] += 1
+            else:
+                self.LBpenalty[win][0] -= 1
+            self.LBpenalty[win][1] += 1
+
+            if self.LBpenalty[win][0] > 10:
+                self.lookback[win] = t-10
+                self.LBpenalty[win] = [0,0]
+                
+            accuracy = 1 - self.LBpenalty[win][0] / self.LBpenalty[win][1]
+            if accuracy > 0.7:
+                position[win] = 1
+
+        for loss in Ls:
+            if position[loss] != -1:
+                self.LBpenalty[loss][0] += 1
+            else:
+                self.LBpenalty[loss][0] -= 1
+            self.LBpenalty[loss][1] += 1
+
+            if self.LBpenalty[loss][0] > 10:
+                self.lookback[loss] = t-10
+                self.LBpenalty[loss] = [0,0]
+                
+
+            accuracy = 1 - self.LBpenalty[loss][0] / self.LBpenalty[loss][1]
+            if accuracy > 0.7:
+                position[loss] = -1
+
+        
 
         return posMax*position
 
     def sigmoid(self,x):
         return 1 / (1 + np.exp(-x))
     
-    def getProfitLoss(self,lPrice:np.ndarray,pPrice:np.ndarray):
-        diff = lPrice-pPrice
-        return diff / pPrice * 100
-
-    def rankedCumulativeWinLoss(self):
-        K = 10
-        gdList = []
+    def rankedCumulativeWinLoss(self,t:int):
+        Llist = []
+        Wlist = []
         for i in range(self.nInst):
-            wr = np.where( self.PLTable[i,:] > 0, 1, 0 ).sum()
-            gdList.append((i,wr))
-        gdList.sort(key=lambda x:x[1],reverse=True)
-        Ws = [i[0] for i in gdList[:K] ]
-        Ls = [ i[0] for i in gdList[-K:] ]
-        print(Ws,Ls)
+            lbIndex = self.lookback[i]
+            end = t-lbIndex
+            differential = self.PLTable[i,lbIndex:].copy()
+            for j in range(1,end+1):
+                differential[j] += differential[j-1]
+            wr = np.where( differential > 0, 1, 0 ).sum()
+            rwr = np.where( differential < 0, 1, 0 ).sum()
+            # kinda arb but just sets minimum threshold 
+            # of consistent & significant wins before a decision is made 
+            if wr+rwr > 125:
+                Llist.append((i,wr))
+                Wlist.append((i,rwr))
+        Llist.sort(key=lambda x:x[1])
+        Wlist.sort(key=lambda x:x[1])
+        Ls = [ i[0] for i in Llist[:self.K] ]
+        Ws = [i[0] for i in Wlist[:self.K] ]
+        return (Ws,Ls)
 
     def getMarketTrend(self,prcSoFar: np.ndarray):
         nInst,t = prcSoFar.shape
