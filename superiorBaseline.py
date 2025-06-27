@@ -37,31 +37,14 @@ class superiorBaseline(Trader):
         Ws,Ls = self.rankedCumulativeWinLoss(t)
         print(t,Ws,Ls)
         for win in Ws:
-            if position[win] != 1:
-                self.LBpenalty[win][0] += 1
-            else:
-                self.LBpenalty[win][0] -= 1
-            self.LBpenalty[win][1] += 1
+            self.updatePenaltyTable(win,t,position[win],1)
 
-            if self.LBpenalty[win][0] > 10:
-                self.lookback[win] = t-10
-                self.LBpenalty[win] = [0,0]
-                
             accuracy = 1 - self.LBpenalty[win][0] / self.LBpenalty[win][1]
             if accuracy > 0.7:
                 position[win] = 1
 
         for loss in Ls:
-            if position[loss] != -1:
-                self.LBpenalty[loss][0] += 1
-            else:
-                self.LBpenalty[loss][0] -= 1
-            self.LBpenalty[loss][1] += 1
-
-            if self.LBpenalty[loss][0] > 10:
-                self.lookback[loss] = t-10
-                self.LBpenalty[loss] = [0,0]
-                
+            self.updatePenaltyTable(loss,t,position[loss],-1)
 
             accuracy = 1 - self.LBpenalty[loss][0] / self.LBpenalty[loss][1]
             if accuracy > 0.7:
@@ -73,6 +56,18 @@ class superiorBaseline(Trader):
 
     def sigmoid(self,x):
         return 1 / (1 + np.exp(-x))
+    
+    def updatePenaltyTable(self,instrument:int,t:int, current_pos:int, intended_pos:int):
+        if current_pos != intended_pos:
+            self.LBpenalty[instrument][0] += 1
+        else:
+            self.LBpenalty[instrument][0] -= 1
+        self.LBpenalty[instrument][1] += 1
+        
+        # Rest table if threshold exceeded
+        if self.LBpenalty[instrument][0] > 10:
+            self.lookback[instrument] = t-10
+            self.LBpenalty[instrument] = [0,0]
     
     def rankedCumulativeWinLoss(self,t:int):
         Llist = []
