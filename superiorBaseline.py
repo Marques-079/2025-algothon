@@ -81,8 +81,11 @@ class superiorBaseline(Trader):
             lbIndex = self.lookback[i]
             end = t-lbIndex
             differential = self.PLTable[i,lbIndex:].copy()
+            
+            # Accumulating win loss in range
             for j in range(1,end+1):
                 differential[j] += differential[j-1]
+
             wr = np.where( differential > 0, 1, 0 ).sum()
             rwr = np.where( differential < 0, 1, 0 ).sum()
             # kinda arb but just sets minimum threshold 
@@ -90,6 +93,7 @@ class superiorBaseline(Trader):
             if wr+rwr > 125:
                 Llist.append((i,wr))
                 Wlist.append((i,rwr))
+        # Idk why but this sorting seems better
         Llist.sort(key=lambda x:x[1])
         Wlist.sort(key=lambda x:x[1])
         Ls = [ i[0] for i in Llist[:self.K] ]
