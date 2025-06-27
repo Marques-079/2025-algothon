@@ -29,7 +29,13 @@ PLOT_COLORS: Dict[str, str] = {
     "sharpe_change": "#d62728",
 }
 
-range_dict = {"Train": (0, 449), "Test": (0, 599), "TestOnly": (450, 599), "Val": (0, 750), "ValOnly": (600, 750)}
+range_dict = {
+    "Train": (1, 449),
+    "Test": (1, 599),
+    "TestOnly": (450, 599),
+    "Val": (1, 750),
+    "ValOnly": (600, 750),
+}
 default_strategy_filepath: str = "./main.py"
 default_strategy_function_name: str = "getMyPosition"
 strategy_file_not_found_message: str = "Strategy file not found"
