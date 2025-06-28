@@ -108,7 +108,7 @@ class PriceForecastDensityPlotter:
         # T, P = np.meshgrid(time_grid, price_grid)
         # surf = ax.plot_surface(T, P, density_matrix, cmap=cm.coolwarm)
 
-        plt.figure(i,figsize=(10, 6))
+        plt.figure(figsize=(10, 6))
         plt.suptitle(f"Inst {i}")
         # plt.plot(t,self.prices,color="orange",linestyle="--",marker='o')
         plt.imshow(
