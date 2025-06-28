@@ -60,7 +60,8 @@ class superiorBaseline(Trader):
                 position[loss] = -1
 
         # The G.O.A.T group
-        group = self.groups[3]
+        # group = self.groups[3]
+        group = [3,29,7]
         g_matrix = prcSoFar[group,:]
         group_trend_index = self.getMarketTrend(g_matrix)
         position[group] = group_trend_index
