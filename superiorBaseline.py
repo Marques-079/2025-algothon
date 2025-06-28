@@ -59,6 +59,11 @@ class superiorBaseline(Trader):
             if accuracy > self.acc_target:
                 position[loss] = -1
 
+        # The G.O.A.T group
+        group = self.groups[3]
+        g_matrix = prcSoFar[group,:]
+        group_trend_index = self.getMarketTrend(g_matrix)
+        position[group] = group_trend_index
         
 
         return posMax*position
@@ -111,7 +116,7 @@ class superiorBaseline(Trader):
         kernel = np.array([1,-1])  #profit kernel
         convolved_array = np.zeros((nInst,t))
 
-        for i in range(50):
+        for i in range(nInst):
             convolved_array[i,:] = np.convolve(prcSoFar[i,:], kernel, mode='same')  # or 'same', 'full'
         
         d_dist = []
