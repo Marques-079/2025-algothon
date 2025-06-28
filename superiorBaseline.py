@@ -73,7 +73,8 @@ class superiorBaseline(Trader):
         
         # Rest table if threshold exceeded
         accuracy = 1 - self.LBpenalty[instrument][0] / self.LBpenalty[instrument][1]
-        if accuracy < self.acc_target and self.LBpenalty[instrument][1] > 0:
+        runCount = self.LBpenalty[instrument][1]
+        if accuracy < self.acc_target and  runCount > 0 :
             self.lookback[instrument] = t-self.lookbackResetAmnt
             self.LBpenalty[instrument] = [0,0]
 
