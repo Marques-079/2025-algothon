@@ -18,6 +18,15 @@ END_DAY: int = 0
 INSTRUMENT_POSITION_LIMIT: int = 10000
 COMMISSION_RATE: float = 0.0005
 NUMBER_OF_INSTRUMENTS: int = 50
+
+# Backtester behavior
+# eval.py hands the trader all the data from previous days
+# previously the backtester treated the start day like day 0 so
+# on starting on day x, there would be no prior data where eval.py would 
+# provide x days of previous prices
+AlignWithEval = True
+
+
 ## For training use Train, when doing testing do TestOnly or Test. ONLY ONCE WE HAVE ALL MODELS ASSEMBLED DO WE USE **VAL** or **VALONLY**
 TESTING_RANGE = 'TestOnly'
 INSTRUMENT_NUMBER = 49
@@ -549,10 +558,13 @@ class Backtester:
             50): requested_positions_history.append([0])
 
         # Iterate through specified timeline
+        sd = start_day - 1
+        if AlignWithEval:
+            sd = 0
         for day in range(start_day,
             end_day + 1):
             # Get the prices so far
-            prices_so_far: ndarray = self.price_history[:, start_day - 1: day]
+            prices_so_far: ndarray = self.price_history[:, sd: day]
 
             # Get desired positions from strategy
             if config is not None and instruments_to_test is not None:

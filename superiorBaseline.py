@@ -1,5 +1,7 @@
 from templates.StandardTemplate import Trader, export
 import numpy as np
+import pickle
+
 
 class superiorBaseline(Trader):
     def __init__(self):
@@ -20,6 +22,14 @@ class superiorBaseline(Trader):
         
         #accuracy: how often should the market trend correlate with the instrument trend
         self.acc_target = 0.1
+        
+        # Correlated instrument grouping
+        corr_pickle = "market_condition/correlated_groups.pkl"
+    
+        with open(corr_pickle, 'rb') as f:
+            data = pickle.load(f)
+        corr_matrix, grouped_instruments = data['correlation_matrix'], data['grouped_instruments']
+        self.groups = grouped_instruments
     
     @export
     def position(self,prcSoFar: np.ndarray):
@@ -30,11 +40,6 @@ class superiorBaseline(Trader):
 
         if self.first:
             self.first = False
-            for i in range(1,t):
-                pp = prcSoFar[:,i-1]
-                lp = prcSoFar[:,i]
-                diff = lp-pp
-                self.PLTable[:,i]  = diff + self.PLTable[:,i-1]
             return posMax
         
         pPrice = prcSoFar[:,-2]
@@ -54,6 +59,11 @@ class superiorBaseline(Trader):
             if accuracy > self.acc_target:
                 position[loss] = -1
 
+        # The G.O.A.T group
+        group = self.groups[3]
+        g_matrix = prcSoFar[group,:]
+        group_trend_index = self.getMarketTrend(g_matrix)
+        position[group] = group_trend_index
         
 
         return posMax*position
@@ -68,7 +78,8 @@ class superiorBaseline(Trader):
         
         # Rest table if threshold exceeded
         accuracy = 1 - self.LBpenalty[instrument][0] / self.LBpenalty[instrument][1]
-        if accuracy < self.acc_target and self.LBpenalty[instrument][1] > 0:
+        runCount = self.LBpenalty[instrument][1]
+        if accuracy < self.acc_target and  runCount > 0 :
             self.lookback[instrument] = t-self.lookbackResetAmnt
             self.LBpenalty[instrument] = [0,0]
 
@@ -105,7 +116,7 @@ class superiorBaseline(Trader):
         kernel = np.array([1,-1])  #profit kernel
         convolved_array = np.zeros((nInst,t))
 
-        for i in range(50):
+        for i in range(nInst):
             convolved_array[i,:] = np.convolve(prcSoFar[i,:], kernel, mode='same')  # or 'same', 'full'
         
         d_dist = []
