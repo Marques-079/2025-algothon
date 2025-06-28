@@ -24,7 +24,12 @@ class superiorBaseline(Trader):
         self.acc_target = 0.1
         
         # Correlated instrument grouping
-        self.corr_pickle = "market_condition/correlated_groups.pkl"
+        corr_pickle = "market_condition/correlated_groups.pkl"
+    
+        with open(corr_pickle, 'rb') as f:
+            data = pickle.load(f)
+        corr_matrix, grouped_instruments = data['correlation_matrix'], data['grouped_instruments']
+        self.groups = grouped_instruments
     
     @export
     def position(self,prcSoFar: np.ndarray):
@@ -35,12 +40,6 @@ class superiorBaseline(Trader):
 
         if self.first:
             self.first = False
-            self.loadCorrelatedGroups()
-            for i in range(1,t):
-                pp = prcSoFar[:,i-1]
-                lp = prcSoFar[:,i]
-                diff = lp-pp
-                self.PLTable[:,i]  = diff + self.PLTable[:,i-1]
             return posMax
         
         pPrice = prcSoFar[:,-2]
@@ -128,9 +127,3 @@ class superiorBaseline(Trader):
         index_delta = d_dist.sum()/n
         index_delta/=abs(index_delta)
         return index_delta
-    
-    def loadCorrelatedGroups(self):
-        with open(self.corr_pickle, 'rb') as f:
-            data = pickle.load(f)
-        corr_matrix, grouped_instruments = ['correlation_matrix'], data['grouped_instruments']
-        print(corr_matrix,grouped_instruments)
