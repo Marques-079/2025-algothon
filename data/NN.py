@@ -40,16 +40,20 @@ class RegressionNetWork():
         
         print(f" Step {i}, Loss: {loss:.5f}")
     
-    def train_2(self,prices,t):
-        x_t = prices[t-30:t].reshape(1, 30, 1)  # reshape to (batch, timesteps, features)
-        y_t = prices[t].reshape(1, 1)           # target is price at time t
+    def train_2(self, prices, t):
+        if t < 31:
+            return  # Not enough data for input and delta
+
+        x_t = prices[t-30:t].reshape(1, 30, 1)         # shape (1, 30, 1)
+        y_t = (prices[t] - prices[t-1]).reshape(1, 1)  # delta as target
 
         model = self.model
         loss = model.train_on_batch(x_t, y_t)
+
         for _ in range(self.loss_epoch(loss)):
             loss = model.train_on_batch(x_t, y_t)
 
-        print(f" Step {t}, Loss: {loss:.5f}")
+        print(f"Step {t}, Loss: {loss:.5f}")
     
     
 
