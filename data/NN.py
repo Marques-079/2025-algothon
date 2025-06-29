@@ -10,13 +10,13 @@ class RegressionNetWork():
             tf.keras.layers.Input(shape=(1,)),
             tf.keras.layers.Dense(64, activation='relu'),
             tf.keras.layers.Dense(32, activation='relu'),
-            tf.keras.layers.Dense(32, activation='relu'),
-            tf.keras.layers.Dense(8, activation='relu'),
+            tf.keras.layers.Dense(16, activation='relu'),
+            tf.keras.layers.Dense(16, activation="tanh"),
             tf.keras.layers.Dense(1)
         ])
 
         optimzer = tf.keras.optimizers.Adam()
-        self.model.compile(optimizer=optimzer, loss='mse')
+        self.model.compile(optimizer=optimzer, loss='huber')
     def loss_epoch(self,loss):
         base = 200
         loss_factor = (10/loss)
@@ -38,3 +38,6 @@ class RegressionNetWork():
             loss = localloss
         
         print(f" Step {i}, Loss: {loss:.5f}")
+    
+    def multiTrain(self,X,Y,time):
+        pass
