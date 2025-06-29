@@ -8,7 +8,7 @@ class RegressionNetWork():
     def __init__(self):
         self.model = tf.keras.Sequential([
             # tf.keras.layers.Input(shape=(30,)),
-            tf.keras.layers.LSTM(128, return_sequences=False,input_shape=(30,1)),
+            tf.keras.layers.LSTM(16, return_sequences=False,input_shape=(30,1)),
 
             tf.keras.layers.Dense(8, activation='relu'),
 
@@ -16,7 +16,7 @@ class RegressionNetWork():
         ])
 
         optimzer = tf.keras.optimizers.Adam()
-        self.model.compile(optimizer=optimzer, loss='huber')
+        self.model.compile(optimizer=optimzer, loss='mse')
     def loss_epoch(self,loss):
         base = 100
         loss_factor = (10/loss)
@@ -43,7 +43,12 @@ class RegressionNetWork():
     def train_2(self,prices,t):
         x_t = prices[t-30:t].reshape(1, 30, 1)  # reshape to (batch, timesteps, features)
         y_t = prices[t].reshape(1, 1)           # target is price at time t
-        loss = self.model.train_on_batch(x_t, y_t)
+
+        model = self.model
+        loss = model.train_on_batch(x_t, y_t)
+        for _ in range(self.loss_epoch(loss)):
+            loss = model.train_on_batch(x_t, y_t)
+
         print(f" Step {t}, Loss: {loss:.5f}")
     
     
