@@ -19,8 +19,6 @@ def softmax(x):
 
     
 max_freq_pred = []
-min_freq_pred = []
-mean_freq_pred = []
 
 lookback = 0
 
@@ -49,21 +47,12 @@ for i in range(1,len(instrPrice)):
     max_val = full_range[idx[-1]]
     max_val = np.round(max_val,decimals=1) 
     
-    min_val = full_range[idx[0]]
-    min_val = np.round(min_val,decimals=1) 
-
-    mean_val = x_next.mean()
-
     max_freq_pred.append(max_val)
-    min_freq_pred.append(min_val)
-    mean_freq_pred.append(mean_val)
     
 
 
 plt.figure(figsize=(20,10))
 plt.plot(instrPrice,label="true",marker='o')
 plt.plot(range(2,len(instrPrice)+1),max_freq_pred,label="forecast max",marker='o')
-plt.plot(range(2,len(instrPrice)+1),min_freq_pred,label="forecast min",marker='o')
-plt.plot(range(2,len(instrPrice)+1),mean_freq_pred,label="forecast mean",marker='o')
 plt.legend()
 plt.show()
