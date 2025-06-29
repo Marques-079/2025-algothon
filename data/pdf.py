@@ -63,6 +63,7 @@ for i in range(1,len(instrPrice)):
 plt.figure(figsize=(20,10))
 plt.plot(instrPrice,label="true")
 plt.plot(range(2,len(instrPrice)+1),max_freq_pred,label="forecast max")
-plt.plot(range(len(instrPrice)-len(network_pred),len(instrPrice)),network_pred,label="network")
+x_range = range(len(instrPrice)-len(network_pred)+1,len(instrPrice)+1)
+plt.plot(x_range,network_pred,label="network")
 plt.legend()
 plt.show()
