@@ -30,10 +30,9 @@ for i in range(1,len(instrPrice)):
     x_current = instrPrice[i]
     lookback = max( i-10, 0)
     x_prev = instrPrice[lookback:i]
-    if i > 31:
-        X = np.array(range(lookback,i))
-        network.train_2(instrPrice,i)
-        network_pred.append(network.predict_2(instrPrice[i-30:i])[0,0])
+    X = np.array(range(lookback,i+1))
+    network.train_1(X,instrPrice[lookback:i+1],i)
+    network_pred.append(network.predict(i+1)[0])
     
     #--------------------conventional methods--------------  
     diff = x_current-x_prev
