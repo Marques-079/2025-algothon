@@ -30,8 +30,8 @@ for i in range(1,len(instrPrice)):
     x_current = instrPrice[i]
     lookback = max( i-10, 0)
     x_prev = instrPrice[lookback:i]
-    X = np.array(range(lookback,i+1))
-    network.train_1(X,instrPrice[lookback:i+1],i)
+    X = np.array(range(lookback,i))
+    network.train_1(X,instrPrice[lookback:i],i)
     network_pred.append(network.predict(i+1)[0])
     
     #--------------------conventional methods--------------  
