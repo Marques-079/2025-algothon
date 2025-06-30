@@ -23,8 +23,13 @@ if activeModel in valid_models:
 # Import the active model normally
     ActiveModel = importlib.import_module(activeModel)
 else:
+    print("╭───────────────────────────────────────────────╮")
+    print( "│\x1b[38;2;255;102;102mYou did not select a model, select one now! ⚠️  \x1b[0m│" )
+    print("╰───────────────────────────────────────────────╯")
+    print()
     for i,v in enumerate(valid_models):
-        print(f"{i}. Model:{v}")
-    no = int(input("Model to run (model number):"))
+        print(f"\033[3m - Model {i}\033[0m: {v}")
+    print()
+    no = int(input("\033[38;2;96;214;149mModel to run (model number)\033[0m:"))
     ActiveModel = importlib.import_module(valid_models[no])
 
