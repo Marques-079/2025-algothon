@@ -1,9 +1,11 @@
 import numpy as np
-from Model.InsiderTrading import InsideTrader
-from Model.BestLastAlg import ChooseBestLastBar
-from Model.superiorBaseline import superiorBaseline
-from Model.ExampleMain import Baseline
-from Model.MeanReversionAlg import MeanReversionTrader  # if it's in a separate file
+# Development models
+from Model.Dev.Insider import InsideTrader
+from Model.Dev.demo import Baseline
+from Model.Dev.BestLast import ChooseBestLastBar
+from Model.Dev.superiorBaseline import superiorBaseline
+from Model.Dev.MeanReversion.MeanReversionAlg import MeanReversionTrader
+
 import pickle
 
 ##### TODO #########################################
