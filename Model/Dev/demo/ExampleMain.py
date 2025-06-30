@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from Model.standard_template.StandardTemplate import Trader, export, export_trading_funcs
+from standard_template import Trader, export
 
 ##### TODO #########################################
 ### IMPLEMENT 'getMyPosition' FUNCTION #############
