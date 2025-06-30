@@ -1,4 +1,4 @@
-from StandardTemplate import Trader, export
+from Model.standard_template.StandardTemplate import Trader, export
 import numpy as np
 import pickle
 

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import math
-from StandardTemplate import Trader, export
+from Model.standard_template.StandardTemplate import Trader, export
 from market_condition.indicators import atr_close_to_close
 
 class ChooseBestLastBar(Trader):
