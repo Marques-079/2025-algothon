@@ -1,1 +1,1 @@
-from standard_template.StandardTemplate import Trader, export
+from .StandardTemplate import Trader, export

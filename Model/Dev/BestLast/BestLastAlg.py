@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import math
 from .ATRClose import atr_close_to_close
-from standard_template import Trader, export
+from Model.standard_template import Trader,export
 
 class ChooseBestLastBar(Trader):
     def __init__(self):

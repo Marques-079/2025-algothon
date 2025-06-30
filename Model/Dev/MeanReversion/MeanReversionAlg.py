@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import math
-from standard_template import Trader, export
+from Model.standard_template import Trader, export
 import matplotlib.pyplot as plt
 import seaborn as sns
 
