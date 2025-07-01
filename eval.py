@@ -89,3 +89,4 @@ print ("StdDev(PL): %.2lf" % plstd)
 print ("annSharpe(PL): %.2lf " % sharpe)
 print ("totDvolume: %.0lf " % dvol)
 print ("Score: %.2lf" % score)
+
