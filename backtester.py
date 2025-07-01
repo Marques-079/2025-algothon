@@ -29,7 +29,7 @@ AlignWithEval = True
 
 ## For training use Train, when doing testing do TestOnly or Test. ONLY ONCE WE HAVE ALL MODELS ASSEMBLED DO WE USE **VAL** or **VALONLY**
 TESTING_RANGE = 'TestOnly'
-INSTRUMENT_NUMBER = 20
+INSTRUMENT_NUMBER = 49
 
 PLOT_COLORS: Dict[str, str] = {
     "pnl": "#2ca02c",
@@ -41,7 +41,7 @@ PLOT_COLORS: Dict[str, str] = {
 range_dict = {
     "Train": (1, 449),
     "Test": (1, 599),
-    "TestOnly": (500, 750),
+    "TestOnly": (450, 599),
     "Val": (1, 750),
     "ValOnly": (600, 750),
 }
