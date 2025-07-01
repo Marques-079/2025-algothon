@@ -37,6 +37,25 @@ dates        = np.arange(START, END+1)         # x‐axis for plotting
 price_df = pd.read_csv(HERE.parent / "prices.txt", sep=r"\s+", header=None)
 
 
+shift = 59
+
+p_len = pred_regimes.shape[1]
+t_len = true2d.shape[1]
+
+# overlap length after we lop off `shift` columns from the left of truth
+# and from the right of predictions
+overlap = min(p_len - shift, t_len - shift)
+
+agree_A = (pred_regimes[:, :overlap]          == true2d[:, shift:shift + overlap]).mean()
+agree_B = (pred_regimes[:, shift:shift+overlap] == true2d[:, :overlap]).mean()
+
+print(f"If predictions LEAD truth by {shift}: {agree_A:.2%}")
+print(f"If truth LEADS predictions by {shift}: {agree_B:.2%}")
+
+
+
+
+
 def plot_inst(inst: int):
 
     prices = price_df.iloc[START:END+1, inst].values
@@ -71,4 +90,4 @@ def plot_inst(inst: int):
     plt.show()
 
 
-plot_inst(5)
+#plot_inst(2)

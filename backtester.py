@@ -19,6 +19,18 @@ INSTRUMENT_POSITION_LIMIT: int = 10000
 COMMISSION_RATE: float = 0.0005
 NUMBER_OF_INSTRUMENTS: int = 50
 
+# Backtester behavior
+# eval.py hands the trader all the data from previous days
+# previously the backtester treated the start day like day 0 so
+# on starting on day x, there would be no prior data where eval.py would 
+# provide x days of previous prices
+AlignWithEval = True
+
+
+## For training use Train, when doing testing do TestOnly or Test. ONLY ONCE WE HAVE ALL MODELS ASSEMBLED DO WE USE **VAL** or **VALONLY**
+TESTING_RANGE = 'TestOnly'
+INSTRUMENT_NUMBER = 20
+
 PLOT_COLORS: Dict[str, str] = {
     "pnl": "#2ca02c",
     "cum_pnl": "#1f77b4",
@@ -26,6 +38,13 @@ PLOT_COLORS: Dict[str, str] = {
     "sharpe_change": "#d62728",
 }
 
+range_dict = {
+    "Train": (1, 449),
+    "Test": (1, 599),
+    "TestOnly": (500, 750),
+    "Val": (1, 750),
+    "ValOnly": (600, 750),
+}
 default_strategy_filepath: str = "./main.py"
 default_strategy_function_name: str = "getMyPosition"
 strategy_file_not_found_message: str = "Strategy file not found"
@@ -129,6 +148,7 @@ class Params:
 def parse_command_line_args() -> Params:
     total_args: int = len(sys.argv)
     params: Params = Params()
+    params.start_day, params.end_day = range_dict[TESTING_RANGE]
 
     if total_args > 1:
         i: int = 1
@@ -538,10 +558,13 @@ class Backtester:
             50): requested_positions_history.append([0])
 
         # Iterate through specified timeline
+        sd = start_day - 1
+        if AlignWithEval:
+            sd = 0
         for day in range(start_day,
             end_day + 1):
             # Get the prices so far
-            prices_so_far: ndarray = self.price_history[:, start_day - 1: day]
+            prices_so_far: ndarray = self.price_history[:, sd: day]
 
             # Get desired positions from strategy
             if config is not None and instruments_to_test is not None:
@@ -730,7 +753,7 @@ class Backtester:
         fig, ax = plt.subplots(figsize=(14, 6))
 
         # CHANGE HERE INSTRUMENT!
-        instrument_no = 49
+        instrument_no = INSTRUMENT_NUMBER
 
         # plot price
         line, = ax.plot(

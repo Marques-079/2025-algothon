@@ -31,4 +31,20 @@ if __name__ == "__main__":
 
 # Initialize trader
 MV = MeanReversionTrader(pairs, beta_matrix, alpha_matrix)
-MV.export_trader()
+#MV.export_trader()
+
+
+from AWP_Alg import RegimeTrader
+
+# … all your other traders …
+
+# Set up your AWP trader and export it:
+AWP = RegimeTrader(
+    model_path="model_AWP/bilstm_regime_model.pth",
+    col_means_path="model_AWP/col_means.npy"
+)
+AWP.export_trader()
+
+
+
+

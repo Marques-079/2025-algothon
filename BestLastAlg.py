@@ -3,6 +3,7 @@ import pandas as pd
 import math
 from templates.StandardTemplate import Trader, export
 from market_condition.indicators import atr_close_to_close
+from templates.StandardTemplate import export
 
 class ChooseBestLastBar(Trader):
     def __init__(self):
