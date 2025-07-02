@@ -20,6 +20,7 @@ class InsideTrader(Trader):
         if t < 750:
             tp = self.prices[:,t]
             diff = tp-lp
+            diff = np.where(diff > 0, 1, -1)
             return lpmax * diff
         return np.full(50,0)
     
