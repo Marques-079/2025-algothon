@@ -17,7 +17,7 @@ class InsideTrader(Trader):
         nInst, t = prcSoFar.shape
         lp = prcSoFar[:,-1]
         lpmax = 10_000/lp
-        if t < 750:
+        if t < len(self.prices[0]):
             tp = self.prices[:,t]
             diff = tp-lp
             diff = np.where(diff > 0, 1, -1)
