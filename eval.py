@@ -21,7 +21,8 @@ range_dict = {
     "TestOnly": (450, 599),
     "Val": (1, 750),
     "ValOnly": (600, 750),
-    "Default":(551,750)
+    "Full": (1, 1000),
+    "FullTest": (750, 1000),
 }
 
 ## For training use Train, when doing testing do TestOnly or Test. ONLY ONCE WE HAVE ALL MODELS ASSEMBLED DO WE USE **VAL** or **VALONLY**
