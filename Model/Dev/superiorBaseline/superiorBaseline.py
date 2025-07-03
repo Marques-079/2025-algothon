@@ -12,7 +12,7 @@ class superiorBaseline(Trader):
         self.K = 3
         self.lookback = [0]*50
         self.LBpenalty = [[0,0]]*50
-        self.PLTable = np.zeros((self.nInst,1000))
+        self.PLTable = np.zeros((self.nInst,1001))
         
         # A rest occurs when there is significant disagreement with market trend
         # and a instrument's observed trend
