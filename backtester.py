@@ -16,7 +16,7 @@ import json
 START_DAY: int = 0
 END_DAY: int = 0
 INSTRUMENT_POSITION_LIMIT: int = 10000
-COMMISSION_RATE: float = 0.0005
+COMMISSION_RATE: float = 0.0000
 NUMBER_OF_INSTRUMENTS: int = 50
 
 # Backtester behavior
@@ -28,8 +28,8 @@ AlignWithEval = True
 
 
 ## For training use Train, when doing testing do TestOnly or Test. ONLY ONCE WE HAVE ALL MODELS ASSEMBLED DO WE USE **VAL** or **VALONLY**
-TESTING_RANGE = 'TestOnly'
-INSTRUMENT_NUMBER = 49
+TESTING_RANGE = 'ValOnly' 
+INSTRUMENT_NUMBER = 42
 
 PLOT_COLORS: Dict[str, str] = {
     "pnl": "#2ca02c",
@@ -43,7 +43,7 @@ range_dict = {
     "Test": (1, 599),
     "TestOnly": (450, 599),
     "Val": (1, 750),
-    "ValOnly": (600, 750),
+    "ValOnly": (500, 750),
 }
 default_strategy_filepath: str = "./main.py"
 default_strategy_function_name: str = "getMyPosition"

@@ -1,2 +1,2 @@
-from .Trader import ma_shifting
-trader = ma_shifting()
+from .Trader import MAStrategy
+trader = MAStrategy()

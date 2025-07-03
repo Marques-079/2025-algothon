@@ -25,7 +25,7 @@ range_dict = {
 }
 
 ## For training use Train, when doing testing do TestOnly or Test. ONLY ONCE WE HAVE ALL MODELS ASSEMBLED DO WE USE **VAL** or **VALONLY**
-TestingRange = 'Default'
+TestingRange = 'Val'
 
 def loadPrices(fn):
     global nt, nInst
