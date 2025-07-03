@@ -1,3 +1,6 @@
+
+#This model is redundant and should not be used.
+
 import numpy as np
 import torch
 import torch.nn as nn
