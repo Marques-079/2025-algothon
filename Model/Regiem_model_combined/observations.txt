@@ -1,0 +1,12 @@
+Tuning the bilstm to 10 context window showed some improvement with higher accuracy but tradeoff of smaller window average sizes
+
+Optimal hypers:
+
+state_dict
+START        = 120
+END          = 750
+SEQ_LEN      = 20
+FEAT_DIM     = 9
+HIDDEN_SIZE  = 64
+NUM_LAYERS   = 2
+NUM_CLASSES  = 3     
