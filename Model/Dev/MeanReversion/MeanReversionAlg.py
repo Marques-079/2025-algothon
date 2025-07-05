@@ -1,9 +1,14 @@
 import numpy as np
 import pandas as pd
 import math
-from Model.standard_template import Trader, export
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'standard_template')))
+from StandardTemplate import Trader, export
 
 class MeanReversionTrader(Trader):
     def __init__(self, pairs, beta_matrix, alpha_matrix, z_entry=2, z_exit=0.5):
