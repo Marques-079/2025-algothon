@@ -1,2 +1,4 @@
-from .Trader import MAStrategy
-trader = MAStrategy()
+
+from .Trader import CheatTrader
+
+trader = CheatTrader()

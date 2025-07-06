@@ -6,7 +6,7 @@ from main import getMyPosition as getPosition
 
 nInst = 0
 nt = 0
-commRate = 0.0005
+commRate = 0.0000
 dlrPosLimit = 10000
 
 ### OPTIONS
@@ -17,7 +17,7 @@ dlrPosLimit = 10000
 # ValOnly 600-750
 range_dict = {
     "Train": (1, 449),
-    "Test": (1, 599),
+    "Test": (1, 599),   
     "TestOnly": (450, 599),
     "Val": (1, 750),
     "ValOnly": (600, 750),
@@ -26,7 +26,7 @@ range_dict = {
 }
 
 ## For training use Train, when doing testing do TestOnly or Test. ONLY ONCE WE HAVE ALL MODELS ASSEMBLED DO WE USE **VAL** or **VALONLY**
-TestingRange = 'Test'
+TestingRange = 'Val'
 
 def loadPrices(fn):
     global nt, nInst
