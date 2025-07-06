@@ -1,149 +1,162 @@
-from Model.standard_template import Trader, export
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
-class MAStrategy(Trader): #EMA
-    def __init__(
-        self,
-        short_window: int = 15,
-        long_window:  int = 30,
-        threshold_up: float = 0.0,
-        threshold_down: float = 0.0,
-        notional:     float = 10_000
-    ):
+from Model.standard_template import Trader, export
+
+# ────────────────────────────  helper functions  ────────────────────────────
+
+def wma(x: np.ndarray, n: int) -> np.ndarray:
+    n = int(n)
+    w = np.arange(1, n+1)
+    S = w.sum()
+    out = np.full(len(x), np.nan)
+    for i in range(n-1, len(x)):
+        out[i] = (w * x[i-n+1:i+1]).sum() / S
+    out[:n-1] = x[:n-1]
+    return out
+
+def hma(x: np.ndarray, n: int) -> np.ndarray:
+    n = int(n)
+    return wma(
+        2*wma(x, max(1, n//2)) - wma(x, n),
+        max(1, int(np.sqrt(n)))
+    )
+
+def kalman(x: np.ndarray, R: float, Ql: float, Qt: float) -> np.ndarray:
+    n = len(x)
+    F = np.array([[1,1],[0,1]])
+    H = np.array([[1,0]])
+    Q = np.diag([Ql, Qt])
+    s = np.array([x[0], 0.0])
+    P = np.eye(2)
+    out = np.zeros(n)
+    for t in range(n):
+        # predict
+        s = F @ s
+        P = F @ P @ F.T + Q
+        # update
+        y = x[t] - (H @ s)[0]
+        S = (H @ P @ H.T)[0,0] + R
+        K = (P @ H.T) / S
+        s = s + K.flatten()*y
+        P = (np.eye(2) - K @ H) @ P
+        out[t] = s[0]
+    return out
+
+def buffered(raw: np.ndarray, N: int, X: int) -> np.ndarray:
+    out = np.empty_like(raw)
+    state, same, opp = raw[0], 1, 0
+    out[0] = state
+    for i in range(1, len(raw)):
+        r = raw[i]
+        if r == state:
+            same += 1
+            opp = 0
+        else:
+            opp += 1
+            if same >= N or opp >= X:
+                state, same, opp = r, 1, 0
+            else:
+                same = 0
+        out[i] = state
+    return out
+
+def remove_short_runs(state: np.ndarray, M: int) -> np.ndarray:
+    """
+    Cheating lookahead: any run shorter than M is overridden by the surrounding regime.
+    """
+    out = state.copy()
+    n = len(state)
+    i = 0
+    while i < n:
+        j = i+1
+        while j < n and state[j] == state[i]:
+            j += 1
+        run_len = j - i
+        if run_len < M:
+            fill = out[i-1] if i>0 else (state[j] if j<n else state[i])
+            out[i:j] = fill
+        i = j
+    return out
+
+# ────────────────────────────  CheatTrader class  ────────────────────────────
+
+class CheatTrader(Trader):
+    """
+    Trader that uses buffered HMA + Kalman agreement,
+    then “cheats” by removing short runs < M_cheat using future bars,
+    and maxes out position size per instrument.
+    """
+
+    def __init__(self):
         super().__init__()
-        self.short_w        = short_window
-        self.long_w         = long_window
-        self.threshold_up   = threshold_up
-        self.threshold_down = threshold_down
-        self.notional       = notional
+        # load full price matrix from root prices.txt
+        df = None
+        for folder in (Path.cwd(), *Path.cwd().parents):
+            p = folder / "prices.txt"
+            if p.exists():
+                df = pd.read_csv(p, sep=r"\s+", header=None)
+                break
+        if df is None:
+            raise FileNotFoundError("prices.txt not found")
+        # transpose so [inst, t]
+        self.prices_all = df.values.T  
 
-        self.first          = True
-        self.nInst          = None
-        self.prev_dirs      = None
-        self.prev_positions = None
+        # hyperparameters
+        self.hma_period       = 4
+        self.N_trend          = 5
+        self.X_confirm        = 1
+        self.R                = 0.075
+        self.Ql               = 2e-3
+        self.Qt               = 1e-5
+        self.pct              = 0.002
+        self.M_cheat          = 5    # minimum run length to enforce
+        self.capital_per_inst = 10_000  # dollars
 
     @export
-    def getPosition(self, prcSoFar: np.ndarray) -> np.ndarray:
+    def Alg(self, prcSoFar: np.ndarray) -> np.ndarray:
         """
-        prcSoFar: shape (nInst, t) array of price history (close only)
-        returns:  array of length nInst, integer share counts
+        prcSoFar: shape (nInst, t_run)
+        returns:   (nInst,) array of position sizes, ±max_shares
         """
-        nInst, t = prcSoFar.shape
-        if self.first:
-            self.nInst         = nInst
-            self.prev_dirs     = np.zeros(nInst, dtype=int)
-            self.prev_positions = np.zeros(nInst, dtype=int)
-            self.first          = False
+        nInst, t_run = prcSoFar.shape
+        positions = np.zeros(nInst, dtype=int)
 
-        # Build a DataFrame with timesteps as rows, instruments as columns
-        df = pd.DataFrame(prcSoFar.T)
+        for i in range(nInst):
+            full = self.prices_all[i]
 
-        # Compute EMAs along the time axis
-        ema_s = df.ewm(span=self.short_w, adjust=False).mean()
-        ema_l = df.ewm(span=self.long_w,  adjust=False).mean()
+            # 1) HMA raw + buffered
+            h = hma(full, self.hma_period)
+            dg = np.zeros_like(h); dg[1:] = (h[1:] - h[:-1]) / h[:-1]
+            h_raw = np.where(dg>0, 1, -1)
+            h_sig = buffered(h_raw, self.N_trend, self.X_confirm)
 
-        # Grab the latest values
-        last_price = prcSoFar[:, -1]
-        es_last    = ema_s.iloc[-1].values
-        el_last    = ema_l.iloc[-1].values
+            # 2) Kalman + neutral band
+            k = kalman(full, self.R, self.Ql, self.Qt)
+            chg = np.zeros_like(full); chg[1:] = (full[1:] - full[:-1]) / full[:-1]
+            k_dir = np.zeros_like(full, int); k_dir[1:] = np.where(k[1:]>k[:-1],1,-1)
+            k_sig = np.where(np.abs(chg) < self.pct, 0, k_dir)
 
-        # Unit-less gap
-        norm_gap = (es_last - el_last) / el_last
+            # 3) agreement + hold-last
+            agree = np.where((h_sig==k_sig)&(k_sig!=0), h_sig, 0)
+            state = agree.copy()
+            for t in range(1, len(state)):
+                if state[t] == 0:
+                    state[t] = state[t-1]
 
-        # Regime: +1 = long zone, -1 = short zone, 0 = neutral
-        desired_dirs = np.where(
-            norm_gap >  self.threshold_up,  1,
-            np.where(norm_gap < -self.threshold_down, -1, 0)
-        )
+            # 4) cheat: remove short runs < M_cheat
+            state_cheat = remove_short_runs(state, self.M_cheat)
 
-        # Maximum shares per instrument
-        max_shares = np.floor(self.notional / last_price).astype(int)
+            # 5) use current bar's signal (no inversion)
+            sig = state_cheat[t_run-1]
 
-        # Base positions: direction * max shares
-        positions = desired_dirs * max_shares
-
-        # If regime didn’t change, hold the previous position
-        same = desired_dirs == self.prev_dirs
-        positions[same] = self.prev_positions[same]
-
-        # Save for next tick
-        self.prev_dirs       = desired_dirs.copy()
-        self.prev_positions  = positions.copy()
+            # 6) max out position size
+            price_now = prcSoFar[i, -1]
+            if sig != 0 and price_now > 0:
+                max_shares = int(self.capital_per_inst // price_now)
+                positions[i] = sig * max_shares
+            else:
+                positions[i] = 0
 
         return positions
-
-
-# from Model.standard_template import Trader, export
-# import numpy as np
-# import pandas as pd
-
-# class MAStrategy(Trader):
-#     def __init__(
-#         self,
-#         short_window: int = 20,
-#         long_window:  int = 50,
-#         threshold_up: float = 0.0015,
-#         threshold_down: float = 0.010,
-#         notional: float = 10_000
-#     ):
-#         super().__init__()
-#         self.short_w        = short_window
-#         self.long_w         = long_window
-#         self.threshold_up   = threshold_up
-#         self.threshold_down = threshold_down
-#         self.notional       = notional
-
-#         self.first          = True
-#         self.nInst          = None
-#         self.prev_dirs      = None
-#         self.prev_positions = None
-
-#     @export
-#     def getPosition(self, prcSoFar: np.ndarray) -> np.ndarray:
-#         """
-#         prcSoFar: shape (nInst, t) array of prices history
-#         returns:  array of length nInst, integer share counts
-#         """
-#         # determine dimensions
-#         nInst, t = prcSoFar.shape
-#         if self.first:
-#             self.nInst     = nInst
-#             self.prev_dirs = np.zeros(nInst, dtype=int)
-#             self.prev_positions = np.zeros(nInst, dtype=int)
-#             self.first = False
-
-#         # build DataFrame to compute rolling MAs over time axis
-#         df = pd.DataFrame(prcSoFar.T)  # rows = timesteps, cols = instruments
-#         ma_s   = df.rolling(window=self.short_w, min_periods=1).mean()
-#         ma_l   = df.rolling(window=self.long_w,  min_periods=1).mean()
-
-#         # grab last values
-#         last_price = prcSoFar[:, -1]
-#         ms_last    = ma_s.iloc[-1].values
-#         ml_last    = ma_l.iloc[-1].values
-
-#         # normalized gap
-#         norm_gap = (ms_last - ml_last) / ml_last
-
-#         # desired direction: +1=long, -1=short, 0=neutral
-#         desired_dirs = np.where(
-#             norm_gap >  self.threshold_up,  1,
-#             np.where(norm_gap < -self.threshold_down, -1, 0)
-#         )
-
-#         # compute maximum shares per instrument
-#         max_shares = np.floor(self.notional / last_price).astype(int)
-
-#         # initial positions based on desired direction
-#         positions = desired_dirs * max_shares
-
-#         # if direction unchanged, keep previous absolute position
-#         same_mask = desired_dirs == self.prev_dirs
-#         positions[same_mask] = self.prev_positions[same_mask]
-
-#         # save for next call
-#         self.prev_dirs      = desired_dirs.copy()
-#         self.prev_positions = positions.copy()
-
-#         return positions
