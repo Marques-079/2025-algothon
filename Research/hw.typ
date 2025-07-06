@@ -15,6 +15,14 @@
 
 #v(3em)
 
+==== Comments from the SIG staff (this was at the end of the video but ngl this is 10x more useful)
+
+People often assume that a time series is stationary even when it usually is not.
+
+"Typically you want to look at returns rather than prices"
+
+"Exploring dependencies between different instruments"
+
 #highlight(team("Algorithmically Based FP:2nd"))
 
 Strategy seems to revolve entirely around using the MACD indicator
@@ -78,7 +86,6 @@ for i, indicator_history in enumerate(prcSoFar):
     uppers.append(upper)
     lowers.append(lower)
 ```
-#v(4em)
 
 #team("Bears, Bulls and Battlestar Galactica" )
 
@@ -108,8 +115,6 @@ my comment: I feel like this was pure luck
 - Have a better result analyzer. They have a PnL graph for each instrument.
 - Get more data through data generators. Apparently they have more test data.
 
-#v(4em)
-
 #team("Big Knees")
 
 SLSQP is some sorta optimization algorithm #link("https://mdolab-pyoptsparse.readthedocs-hosted.com/en/latest/index.html")
@@ -125,8 +130,6 @@ arrow.b\
 3. "Refine prediction with comissions (SLSQP)"\
 "(optimze score considering comissions)"\
 $
-
-#v(4em)
 
 #highlight(team("CookieAlgorists FP:1st"))
 
@@ -156,11 +159,44 @@ That Haskell white paper.
 
 The memers.
 
-Short / Long window EMA 
+Fast, Medium Slow windowed EMA 
 
 #team( "SVY" )
 
-Something forgettable.
+Correlation grouping and trading based on latest trend
+```py
+    look_back = 153
+    num_instruments = prices.shape[1]
+    currentPos = [0] * num_instruments
+    
+    for i in range(num_instruments):
+        this_inst = prices[-look_back:, i]
+        
+        candidate_indices = []
+        for j in range(num_instruments):
+            if j == i:
+                continue
+            other_inst = prices[-look_back:, j]
+            corr = np.corrcoef(this_inst, other_inst)[0, 1]
+            if corr >= 0.95:
+                candidate_indices.append(j)
+        
+        if not candidate_indices:
+            continue
+        
+        for j in candidate_indices:
+            price_today = prices[-1, j]
+            price_yesterday = prices[-2, j]
+            
+            allocation = positionLimit // len(candidate_indices)
+            
+            if price_today > price_yesterday:
+                currentPos[i] += allocation
+            elif price_today < price_yesterday:
+                currentPos[i] -= allocation
+    
+    return currentPos
+```
 
 #team( "Team Q" )
 
