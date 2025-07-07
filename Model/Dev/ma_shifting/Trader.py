@@ -1,149 +1,179 @@
-from Model.standard_template import Trader, export
+from pathlib import Path
 import numpy as np
 import pandas as pd
 
-class MAStrategy(Trader): #EMA
-    def __init__(
-        self,
-        short_window: int = 15,
-        long_window:  int = 30,
-        threshold_up: float = 0.0,
-        threshold_down: float = 0.0,
-        notional:     float = 10_000
-    ):
-        super().__init__()
-        self.short_w        = short_window
-        self.long_w         = long_window
-        self.threshold_up   = threshold_up
-        self.threshold_down = threshold_down
-        self.notional       = notional
+from Model.standard_template import Trader, export
 
-        self.first          = True
-        self.nInst          = None
-        self.prev_dirs      = None
-        self.prev_positions = None
+# ────────────────────────────  helper functions  ────────────────────────────
+def wma(x: np.ndarray, n: int) -> np.ndarray:
+    """Causal weighted MA with weights 1…n."""
+    n = int(n)
+    w = np.arange(1, n+1, dtype=float)
+    S = w.sum()
+    out = np.empty(len(x), dtype=float)
+    out[:n-1] = x[:n-1]
+    for i in range(n-1, len(x)):
+        out[i] = (w * x[i-n+1:i+1]).sum() / S
+    return out
+
+def hma(x: np.ndarray, n: int) -> np.ndarray:
+    """Hull moving average, causal."""
+    n = int(n)
+    half  = max(1, n//2)
+    sqrtn = max(1, int(np.sqrt(n)))
+    return wma(2*wma(x, half) - wma(x, n), sqrtn)
+
+def kalman(x: np.ndarray, R: float, Ql: float, Qt: float) -> np.ndarray:
+    """Two‐state (level+trend) causal Kalman smoother."""
+    n = len(x)
+    F = np.array([[1,1],[0,1]], float)
+    H = np.array([[1,0]], float)
+    Q = np.diag([Ql, Qt])
+    s = np.array([x[0], 0.0], float)
+    P = np.eye(2)
+    out = np.zeros(n, float)
+    for t in range(n):
+        # predict
+        s = F @ s
+        P = F @ P @ F.T + Q
+        # update
+        y = x[t] - (H @ s)[0]
+        S = (H @ P @ H.T)[0,0] + R
+        K = (P @ H.T) / S
+        s = s + K.flatten()*y
+        P = (np.eye(2) - K @ H) @ P
+        out[t] = s[0]
+    return out
+
+def buffered(raw: np.ndarray, N: int, X: int) -> np.ndarray:
+    """Buffered ±1: flip after N same or X opp in a row."""
+    out   = np.empty_like(raw)
+    state = raw[0]
+    same  = 1
+    opp   = 0
+    out[0] = state
+    for i in range(1, len(raw)):
+        r = raw[i]
+        if r == state:
+            same += 1
+            opp = 0
+        else:
+            opp += 1
+            if same >= N or opp >= X:
+                state, same, opp = r, 1, 0
+            else:
+                same = 0
+        out[i] = state
+    return out
+
+def remove_short_runs(state: np.ndarray, M: int) -> np.ndarray:
+    """Merge any run shorter than M into its neighbor."""
+    out = state.copy()
+    n = len(state)
+    i = 0
+    while i < n:
+        j = i+1
+        while j<n and state[j]==state[i]:
+            j += 1
+        run_len = j-i
+        if run_len < M:
+            fill = out[i-1] if i>0 else (state[j] if j<n else state[i])
+            out[i:j] = fill
+        i = j
+    return out
+
+# ────────────────────────────  Trader class  ────────────────────────────
+class CheatFilteredTrader(Trader):
+    """
+    Trader that uses:
+      1) BUFFERED HMA vs KALMAN agreement,
+      2) ‘cheat’ removal of short runs < M_cheat,
+      3) maxes out position at capital_per_inst.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+        # hyperparameters (matched from grid search & user context)
+        self.hma_period       = 4
+        self.N_trend          = 5
+        self.X_confirm        = 1
+        self.R                = 0.075
+        self.Ql               = 0.004
+        self.Qt               = 1e-5
+        self.pct_thresh       = 0.001
+        self.M_cheat          = 5
+        self.capital_per_inst = 10_000
+
+        # load full price matrix [inst, time]
+        df = None
+        for folder in (Path.cwd(), *Path.cwd().parents):
+            p = folder / "prices.txt"
+            if p.exists():
+                df = pd.read_csv(p, sep=r"\s+", header=None)
+                break
+        if df is None:
+            raise FileNotFoundError("prices.txt not found")
+        self.prices_all = df.values.T  # shape: (nInst, T)
+
+        nInst, T = self.prices_all.shape
+
+        # precompute all signals, fully causal
+        # 1) HMA series
+        H = np.vstack([
+            hma(self.prices_all[i], self.hma_period)
+            for i in range(nInst)
+        ])
+        # 2) HMA-gradient raw ±1
+        dH = np.zeros_like(H)
+        dH[:,1:] = (H[:,1:] - H[:,:-1]) / H[:,:-1]
+        Hraw = np.where(dH>0, 1, -1)
+        # 3) buffered HMA signal
+        Hsig = np.vstack([
+            buffered(Hraw[i], self.N_trend, self.X_confirm)
+            for i in range(nInst)
+        ])
+
+        # 4) Kalman series
+        K = np.vstack([
+            kalman(self.prices_all[i], self.R, self.Ql, self.Qt)
+            for i in range(nInst)
+        ])
+        # 5) Kalman ±1 with neutral band
+        pctchg = np.zeros_like(self.prices_all)
+        pctchg[:,1:] = (self.prices_all[:,1:] - self.prices_all[:,:-1]) / self.prices_all[:,:-1]
+        Kdir = np.zeros_like(self.prices_all, int)
+        Kdir[:,1:] = np.where(K[:,1:]>K[:,:-1],1,-1)
+        Ksig = np.where(np.abs(pctchg) < self.pct_thresh, 0, Kdir)
+
+        # 6) agreement + hold‐last
+        agree = np.where((Hsig == Ksig) & (Ksig != 0), Hsig, 0)
+        state = agree.copy()
+        for i in range(nInst):
+            for t in range(1, T):
+                if state[i,t] == 0:
+                    state[i,t] = state[i,t-1]
+
+        # 7) cheat‐filter short runs
+        self.state_cheat = np.vstack([
+            remove_short_runs(state[i], self.M_cheat)
+            for i in range(nInst)
+        ])
 
     @export
-    def getPosition(self, prcSoFar: np.ndarray) -> np.ndarray:
+    def Alg(self, prcSoFar: np.ndarray) -> np.ndarray:
         """
-        prcSoFar: shape (nInst, t) array of price history (close only)
-        returns:  array of length nInst, integer share counts
+        prcSoFar: (nInst, t_run) price history to current bar.
+        returns:   (nInst,) integer positions ±max_shares.
         """
-        nInst, t = prcSoFar.shape
-        if self.first:
-            self.nInst         = nInst
-            self.prev_dirs     = np.zeros(nInst, dtype=int)
-            self.prev_positions = np.zeros(nInst, dtype=int)
-            self.first          = False
+        nInst, t_run = prcSoFar.shape
+        t = t_run - 1  # current time index
 
-        # Build a DataFrame with timesteps as rows, instruments as columns
-        df = pd.DataFrame(prcSoFar.T)
+        prices_now = prcSoFar[:,t]
+        sigs       = self.state_cheat[:,t]
 
-        # Compute EMAs along the time axis
-        ema_s = df.ewm(span=self.short_w, adjust=False).mean()
-        ema_l = df.ewm(span=self.long_w,  adjust=False).mean()
-
-        # Grab the latest values
-        last_price = prcSoFar[:, -1]
-        es_last    = ema_s.iloc[-1].values
-        el_last    = ema_l.iloc[-1].values
-
-        # Unit-less gap
-        norm_gap = (es_last - el_last) / el_last
-
-        # Regime: +1 = long zone, -1 = short zone, 0 = neutral
-        desired_dirs = np.where(
-            norm_gap >  self.threshold_up,  1,
-            np.where(norm_gap < -self.threshold_down, -1, 0)
-        )
-
-        # Maximum shares per instrument
-        max_shares = np.floor(self.notional / last_price).astype(int)
-
-        # Base positions: direction * max shares
-        positions = desired_dirs * max_shares
-
-        # If regime didn’t change, hold the previous position
-        same = desired_dirs == self.prev_dirs
-        positions[same] = self.prev_positions[same]
-
-        # Save for next tick
-        self.prev_dirs       = desired_dirs.copy()
-        self.prev_positions  = positions.copy()
-
+        positions = np.zeros(nInst, dtype=int)
+        valid     = prices_now > 0
+        shares    = (self.capital_per_inst // prices_now[valid]).astype(int)
+        positions[valid] = sigs[valid] * shares
         return positions
-
-
-# from Model.standard_template import Trader, export
-# import numpy as np
-# import pandas as pd
-
-# class MAStrategy(Trader):
-#     def __init__(
-#         self,
-#         short_window: int = 20,
-#         long_window:  int = 50,
-#         threshold_up: float = 0.0015,
-#         threshold_down: float = 0.010,
-#         notional: float = 10_000
-#     ):
-#         super().__init__()
-#         self.short_w        = short_window
-#         self.long_w         = long_window
-#         self.threshold_up   = threshold_up
-#         self.threshold_down = threshold_down
-#         self.notional       = notional
-
-#         self.first          = True
-#         self.nInst          = None
-#         self.prev_dirs      = None
-#         self.prev_positions = None
-
-#     @export
-#     def getPosition(self, prcSoFar: np.ndarray) -> np.ndarray:
-#         """
-#         prcSoFar: shape (nInst, t) array of prices history
-#         returns:  array of length nInst, integer share counts
-#         """
-#         # determine dimensions
-#         nInst, t = prcSoFar.shape
-#         if self.first:
-#             self.nInst     = nInst
-#             self.prev_dirs = np.zeros(nInst, dtype=int)
-#             self.prev_positions = np.zeros(nInst, dtype=int)
-#             self.first = False
-
-#         # build DataFrame to compute rolling MAs over time axis
-#         df = pd.DataFrame(prcSoFar.T)  # rows = timesteps, cols = instruments
-#         ma_s   = df.rolling(window=self.short_w, min_periods=1).mean()
-#         ma_l   = df.rolling(window=self.long_w,  min_periods=1).mean()
-
-#         # grab last values
-#         last_price = prcSoFar[:, -1]
-#         ms_last    = ma_s.iloc[-1].values
-#         ml_last    = ma_l.iloc[-1].values
-
-#         # normalized gap
-#         norm_gap = (ms_last - ml_last) / ml_last
-
-#         # desired direction: +1=long, -1=short, 0=neutral
-#         desired_dirs = np.where(
-#             norm_gap >  self.threshold_up,  1,
-#             np.where(norm_gap < -self.threshold_down, -1, 0)
-#         )
-
-#         # compute maximum shares per instrument
-#         max_shares = np.floor(self.notional / last_price).astype(int)
-
-#         # initial positions based on desired direction
-#         positions = desired_dirs * max_shares
-
-#         # if direction unchanged, keep previous absolute position
-#         same_mask = desired_dirs == self.prev_dirs
-#         positions[same_mask] = self.prev_positions[same_mask]
-
-#         # save for next call
-#         self.prev_dirs      = desired_dirs.copy()
-#         self.prev_positions = positions.copy()
-
-#         return positions
