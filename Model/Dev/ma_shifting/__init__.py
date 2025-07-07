@@ -1,4 +1,4 @@
 
-from .Trader import CheatTrader
+from .Trader import CheatFilteredTrader
 
-trader = CheatTrader()
+trader = CheatFilteredTrader()
