@@ -24,13 +24,4 @@ ref=  Insider.InsideTrader(TD)
 e = Evaluator(TD,ref.get_exported())
 
 t = TD.shape[1]
-(meanpl, ret, plstd, sharpe, dvol) = e.calcPL(0,t)
-score = meanpl - 0.1*plstd
-print ("=====")
-print ("mean(PL): %.1lf" % meanpl)
-print ("return: %.5lf" % ret)
-print ("StdDev(PL): %.2lf" % plstd)
-print ("annSharpe(PL): %.2lf " % sharpe)
-print ("totDvolume: %.0lf " % dvol)
-print ("Score: %.2lf" % score)
-
+e.evaluate(0,t)
