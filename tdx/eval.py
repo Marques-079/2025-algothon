@@ -85,3 +85,13 @@ class Evaluator():
         score = 1-diff[ranking]
         print("Instrument:",ranking)
         print("Score:",score)
+        self.showPositions(ranking[:3])
+        self.showPositions(ranking[-3:])
+        
+    def showPositions(self,p):
+        n = self.referncePositions.shape[0]
+        colors = np.random.rand(n, 3)
+        for i in p:
+            diff = self.referncePositions[i,:] - self.positionsHeld[i,:]
+            plt.plot(diff,color=colors[i],marker='o',linestyle="",alpha=0.2)
+        plt.show()
