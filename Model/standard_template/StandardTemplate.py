@@ -49,3 +49,11 @@ class Trader():
                 print(f"Exporting: {k}.{f[0]}")
                 exec(f"getMyPosition = {k}.{f[0]}",caller_globals)
                 return
+    
+    def get_exported(self):
+        """Return exported trader method with @export as a function"""
+        frame = inspect.currentframe()
+        cname = self.__class__
+        caller_globals = frame.f_back.f_globals
+        f = find_exports(self)
+        return getattr(self,f[0])
