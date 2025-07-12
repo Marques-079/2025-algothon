@@ -6,7 +6,7 @@ from main import getMyPosition as getPosition
 
 nInst = 0
 nt = 0
-commRate = 0.0000
+commRate = 0.0005
 dlrPosLimit = 10000
 
 ### OPTIONS
