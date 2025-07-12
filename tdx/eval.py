@@ -80,6 +80,7 @@ class Evaluator():
         self.positionsHeld = np.stack(self.positionsHeld).T
         diff = self.positionsHeld-self.referncePositions
         diff = np.sum(np.abs(diff),axis=1)
+        print("Mean difference:",diff.mean())
         diff /= np.linalg.norm(diff)
         ranking = np.argsort(diff)
         score = 1-diff[ranking]
