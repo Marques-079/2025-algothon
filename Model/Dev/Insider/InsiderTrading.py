@@ -8,9 +8,11 @@ def loadPrices(fn):
     return df
 
 class InsideTrader(Trader):
-    def __init__(self):
+    def __init__(self,prices=None):
         super(Trader).__init__()
         self.prices = ( loadPrices("prices.txt").values ).T
+        if prices is not None:
+            self.prices = prices
     
     @export
     def insider(self,prcSoFar: np.ndarray):
