@@ -1,7 +1,15 @@
-from gen import R3Generator
+from gen import *
+import matplotlib.pyplot as plt
+
+import pandas as pd
+def loadPrices(fn):
+    df = pd.read_csv(fn, sep='\s+', header=None, index_col=None)
+    return df
+
+RealData = ( loadPrices("prices.txt").values ).T
+
 from eval import Evaluator
 import sys
-import pandas as pd
 
 import os
 # Add the parent directory of main_dir/ to sys.path
@@ -9,12 +17,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from Model.Dev import Insider
 
-def loadPrices(fn):
-    df = pd.read_csv(fn, sep='\s+', header=None, index_col=None)
-    return df
 
-RealData = ( loadPrices("prices.txt").values ).T
-TD = RealData
+TD = R1Icorr()
 ref=  Insider.InsideTrader(TD)
 
 e = Evaluator(TD,ref.get_exported())
