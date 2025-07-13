@@ -83,6 +83,7 @@ trade_signal  = np.where(stdT>1,1,stdT)*lpmax*trade_signal
 
 diff = trade_signal-correct_signal
 print(np.sum(np.abs(diff)))
+print(np.sum(np.where(diff==0,1,0)))
 
 # Plotting
 plt.figure(figsize=(10, 5))
