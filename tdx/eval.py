@@ -79,13 +79,20 @@ class Evaluator():
     def comparePositions(self):
         self.positionsHeld = np.stack(self.positionsHeld).T
         diff = self.positionsHeld-self.referncePositions
+        eqTrades = np.sum(np.where(diff == 0,1,0),axis=1)
         diff = np.sum(np.abs(diff),axis=1)
         print("Mean difference:",diff.mean())
-        diff /= np.linalg.norm(diff)
+        print("Mean equal trades:",eqTrades.mean())
+        # diff /= np.linalg.norm(diff)
         ranking = np.argsort(diff)
-        score = 1-diff[ranking]
-        print("Instrument:",ranking)
-        print("Score:",score)
+        df = pd.DataFrame({
+            "Instruments":ranking,
+            "Score":diff[ranking],
+            "EqualTrades":eqTrades[ranking]
+        })
+        print(df.describe())
+        print(df)
+
         self.showPositions(range(50))
         
     def showPositions(self,p):
