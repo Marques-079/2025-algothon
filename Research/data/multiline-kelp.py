@@ -79,7 +79,7 @@ std = np.stack([stdT+convergence_measure,stdB+convergence_measure])
 trade_signal = instPrice - convergence_measure
 trade_signal /= np.abs(trade_signal)
 lpmax = 10_000/instPrice
-trade_signal  = stdT*lpmax*trade_signal
+trade_signal  = np.where(stdT>1,1,stdT)*lpmax*trade_signal
 
 diff = trade_signal-correct_signal
 print(np.sum(np.abs(diff)))
