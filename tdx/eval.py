@@ -80,14 +80,20 @@ class Evaluator():
         self.positionsHeld = np.stack(self.positionsHeld).T
         diff = self.positionsHeld-self.referncePositions
         eqTrades = np.sum(np.where(diff == 0,1,0),axis=1)
-        diff = np.sum(np.abs(diff),axis=1)
-        print("Mean difference:",diff.mean())
+        pdiff = np.where(diff > 0, diff , 0)
+        ndiff = np.where(diff < 0, diff , 0)
+        pscore = np.sum(pdiff,axis=1)
+        nscore = np.sum(ndiff,axis=1)
+        score = np.sum(np.abs(diff),axis=1)
+        print("Mean score:",score.mean(),pscore.mean(),nscore.mean())
         print("Mean equal trades:",eqTrades.mean())
-        # diff /= np.linalg.norm(diff)
-        ranking = np.argsort(diff)
+        # score /= np.linalg.norm(score)
+        ranking = np.argsort(score)
         df = pd.DataFrame({
             "Instruments":ranking,
-            "Score":diff[ranking],
+            "Score":score[ranking],
+            "pScore":pscore[ranking],
+            "nScore":nscore[ranking],
             "EqualTrades":eqTrades[ranking]
         })
         print(df.describe())
