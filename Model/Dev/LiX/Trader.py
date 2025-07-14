@@ -14,23 +14,27 @@ class LiX(Trader):
     def make_pos(self,prcSoFar: np.ndarray):
         _, t = prcSoFar.shape
         self.lpmax = 10_000/prcSoFar[:,-1]
+        N = 50
         if self.first:
             self.first = False
-            N = 50
             for i in range(0,N):
                 self.emaTable.append(self.pregen_ema(prcSoFar,span=2*( i+1 )))
 
-        N = 50
+        curr_emas = []
         for i in range(0,N):
             emas = self.emaTable[i]
             new_ema = self.get_next_ema(prcSoFar,span=2*(i+1))
+            curr_emas.append(new_ema)
             new_ema = new_ema[:,np.newaxis]
             self.emaTable[i] = np.concat(( emas,new_ema ),axis=1)
-            print(emas.shape)
+        curr_emas = np.array(curr_emas)
+        cm_mean = np.mean(curr_emas,axis=0)
+        cm_std = np.std(curr_emas,axis=0)
+        print(curr_emas.shape,cm_mean.shape,cm_std.shape,cm_std[15],t)
 
         if t == 999:
             pemas = np.stack(self.emaTable)
-
+            print(pemas.shape)
             ipPema = pemas[:,15,:].T
             emas = ipPema
             convergence_measure = np.mean(emas,axis=1)
@@ -45,7 +49,7 @@ class LiX(Trader):
             plt.plot(std.T,color="yellow")
             plt.show()
 
-        return self.lpmax
+        return self.lpmax 
 
     def pregen_ema(self,mat,span):
         alpha = 2 / (span + 1)
