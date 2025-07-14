@@ -78,7 +78,7 @@ def para_ema(mat,span):
 
 emas = []
 pemas = []
-N = 10
+N = 100
 for i in range(0,N):
     emas.append(compute_ema(instPrice,span=2*( i+1 )))
     pemas.append(para_ema(prices,span=2*( i+1 )))
@@ -87,9 +87,17 @@ pemas = np.stack(pemas)
 
 ipPema = pemas[:,instID,:].T
 
-convergence_measure = np.mean(emas,axis=1)
+convergence_measure = np.mean(emas[:,:15],axis=1)
 stdT = np.std(emas,axis=1) 
 stdB = -stdT
+
+from scipy.stats import rankdata
+a = stdT
+# Rank the data (1-based), then scale to percentiles
+percentiles = 100 * (rankdata(a, method='average') - 1) / (len(a) - 1)
+
+print(percentiles)
+
 std = np.stack([stdT+convergence_measure,stdB+convergence_measure])
 
 trade_signal = instPrice - convergence_measure
