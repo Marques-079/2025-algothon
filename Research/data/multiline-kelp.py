@@ -9,7 +9,7 @@ prices = (df.values).T
 nInst ,T = 50,750
 # Simulate a 1D system: constant velocity + noise
 
-instID = 15
+instID = 0
 instPrice = prices[instID]
 
 
@@ -78,7 +78,7 @@ def para_ema(mat,span):
 
 emas = []
 pemas = []
-N = 50
+N = 10
 for i in range(0,N):
     emas.append(compute_ema(instPrice,span=2*( i+1 )))
     pemas.append(para_ema(prices,span=2*( i+1 )))
@@ -107,8 +107,8 @@ plt.plot(instPrice, label='Noisy Measurements', alpha=0.5)
 plt.plot(emas,alpha=0.1,color="red")
 plt.plot(convergence_measure,label="convergence measure")
 plt.plot(std.T,color="yellow")
-plt.plot(trade_signal)
-plt.plot(correct_signal,alpha=0.1,linestyle='',marker='o')
+# plt.plot(trade_signal)
+# plt.plot(correct_signal,alpha=0.1,linestyle='',marker='o')
 # plt.plot(x_estimates, label='Kalman Estimate', linewidth=2)
 plt.plot(np.arange(n, n+future_steps), forecast, label='Forecast', linewidth=2)
 plt.legend()
