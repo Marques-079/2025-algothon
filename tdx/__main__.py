@@ -24,4 +24,4 @@ ref=  Insider.InsideTrader(TD)
 e = Evaluator(TD,getMyPosition,ref.get_exported())
 
 t = TD.shape[1]
-e.evaluate(250,t)
+e.evaluate(750,t)
