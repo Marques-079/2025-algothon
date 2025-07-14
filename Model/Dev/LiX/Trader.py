@@ -1,6 +1,7 @@
 from Model.standard_template import Trader,export
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.stats import rankdata
 
 class LiX(Trader):
     def __init__(self):
@@ -37,18 +38,16 @@ class LiX(Trader):
         cm_std = np.std(curr_emas,axis=0)
 
         self.stdTable = np.append(self.stdTable,cm_std[:,np.newaxis],1)
-        min_val = np.min(self.stdTable,1)
-        max_val = np.max(self.stdTable,1)
-        centered_std = cm_std - min_val
-        diff  = max_val-min_val
-        centered_std /= diff
         
         trade_signal = current_price - cm_mean
         trade_signal /= np.abs(trade_signal)
         
-        weight = centered_std
-        threshold = np.percentile(weight, 30)
-        weight[weight <= threshold] = 0
+        windowed_stdTable = self.stdTable[:,-100:]
+        weights = (rankdata(windowed_stdTable, method='average',axis=1) - 1) / (windowed_stdTable.shape[1] - 1)
+        weight = weights[:,-1]
+        t = 0.5
+        weight[weight > t] = 1
+        weight = np.where(weight <= t,weight*0.5,weight)
 
         pos = trade_signal * weight * self.lpmax
         return pos
