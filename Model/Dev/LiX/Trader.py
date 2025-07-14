@@ -8,6 +8,7 @@ class LiX(Trader):
         self.lpmax = np.zeros(50)
         self.emaRange = 50
         self.emaTable = []
+        self.stdTable = None
         self.first = True
     
     @export
@@ -15,11 +16,14 @@ class LiX(Trader):
         _, t = prcSoFar.shape
         current_price = prcSoFar[:,-1]
         self.lpmax = 10_000/current_price
-        N =  1000
+        N =  100
         if self.first:
             self.first = False
             for i in range(0,N):
                 self.emaTable.append(self.pregen_ema(prcSoFar,span=i))
+            emas = np.array( self.emaTable )
+            stdT = np.std(emas,axis=0) 
+            self.stdTable = stdT
 
         curr_emas = []
         for i in range(0,N):
@@ -31,13 +35,22 @@ class LiX(Trader):
         curr_emas = np.array(curr_emas)
         cm_mean = np.mean(curr_emas,axis=0)
         cm_std = np.std(curr_emas,axis=0)
+
+        self.stdTable = np.append(self.stdTable,cm_std[:,np.newaxis],1)
+        min_val = np.min(self.stdTable,1)
+        max_val = np.max(self.stdTable,1)
+        centered_std = cm_std - min_val
+        diff  = max_val-min_val
+        centered_std /= diff
         
         trade_signal = current_price - cm_mean
         trade_signal /= np.abs(trade_signal)
         
-        weight = np.where(cm_std>1,1,cm_std)
+        weight = centered_std
+        threshold = np.percentile(weight, 30)
+        weight[weight <= threshold] = 0
 
-        pos = trade_signal * self.lpmax
+        pos = trade_signal * weight * self.lpmax
         return pos
 
     def pregen_ema(self,mat,span):
@@ -60,4 +73,4 @@ class LiX(Trader):
         return new_ema
 
     def span_transform(self,s):
-        return 0.5*(s+1)
+        return 1*(s+1)
