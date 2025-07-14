@@ -74,11 +74,11 @@ class Evaluator():
         print ("annSharpe(PL): %.2lf " % sharpe)
         print ("totDvolume: %.0lf " % dvol)
         print ("Score: %.2lf" % score)
-        self.comparePositions()
+        self.comparePositions(startDay,endDay)
 
-    def comparePositions(self):
+    def comparePositions(self,startDay,endDay):
         self.positionsHeld = np.stack(self.positionsHeld).T
-        diff = self.positionsHeld-self.referncePositions
+        diff = self.positionsHeld-self.referncePositions[:,startDay:endDay]
         eqTrades = np.sum(np.where(diff == 0,1,0),axis=1)
         pdiff = np.where(diff > 0, diff , 0)
         ndiff = np.where(diff < 0, diff , 0)
@@ -99,9 +99,9 @@ class Evaluator():
         print(df.describe())
         print(df)
 
-        self.showPositions(range(50))
+        # self.showPositions(range(50),startDay,endDay)
         
-    def showPositions(self,p):
+    def showPositions(self,p,startDay,endDay):
         n = self.referncePositions.shape[0]
         colors = np.random.rand(n, 3)
         cols = 10
@@ -111,8 +111,8 @@ class Evaluator():
         axes = axes.flatten()  # flatten to 1D list of axes
 
         for i in p:
-            diff = self.referncePositions[i, :] - self.positionsHeld[i, :]
+            diff = self.referncePositions[i, startDay:endDay] - self.positionsHeld[i, :]
             diff = np.abs(diff)
-            axes[i].plot(diff, color=colors[i], marker='o', linestyle="", alpha=0.2)
+            axes[i].plot(np.linspace(startDay,endDay,endDay-startDay-1),diff, color=colors[i], marker='o', linestyle="", alpha=0.2)
             axes[i].set_title(f"Instrument {i}")
         plt.show()
