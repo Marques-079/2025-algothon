@@ -66,11 +66,27 @@ def compute_ema(series, span):
         ema[t] = alpha * series[t] + (1 - alpha) * ema[t-1]
     return ema
 
+def para_ema(mat,span):
+    alpha = 2 / (span + 1)
+    ema = np.zeros_like(mat)
+    nInst,T = mat.shape
+    ema[:,0] = mat[:,0]  # Initialize with first value
+    for t in range(1, T):
+        ema[:,t] = alpha * mat[:,t] + (1 - alpha) * ema[:,t-1]
+    return ema
+
+
 emas = []
+pemas = []
 N = 50
 for i in range(0,N):
     emas.append(compute_ema(instPrice,span=2*( i+1 )))
+    pemas.append(para_ema(prices,span=2*( i+1 )))
 emas = np.array(emas).T
+pemas = np.stack(pemas)
+
+ipPema = pemas[:,instID,:].T
+
 convergence_measure = np.mean(emas,axis=1)
 stdT = np.std(emas,axis=1) 
 stdB = -stdT
