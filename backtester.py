@@ -28,7 +28,7 @@ AlignWithEval = True
 
 
 ## For training use Train, when doing testing do TestOnly or Test. ONLY ONCE WE HAVE ALL MODELS ASSEMBLED DO WE USE **VAL** or **VALONLY**
-TESTING_RANGE = 'Full'
+TESTING_RANGE = 'FullTest'
 INSTRUMENT_NUMBER = 0
 
 PLOT_COLORS: Dict[str, str] = {
