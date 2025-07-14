@@ -65,6 +65,7 @@ class Evaluator():
         return (plmu, ret, plstd, annSharpe, totDVolume)
     
     def evaluate(self,startDay,endDay):
+        self.positionsHeld = []
         (meanpl, ret, plstd, sharpe, dvol) = self.calcPL(startDay,endDay,self.getPos)
         score = meanpl - 0.1*plstd
         print ("=====")
@@ -97,7 +98,7 @@ class Evaluator():
             "EqualTrades":eqTrades[ranking]
         })
         print(df.describe())
-        print(df)
+        # print(df)
 
         # self.showPositions(range(50),startDay,endDay)
         
