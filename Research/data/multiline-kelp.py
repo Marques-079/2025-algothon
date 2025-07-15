@@ -78,7 +78,7 @@ def para_ema(mat,span):
 
 emas = []
 pemas = []
-N = 100
+N = 50
 for i in range(0,N):
     emas.append(compute_ema(instPrice,span=2*( i+1 )))
     pemas.append(para_ema(prices,span=2*( i+1 )))
@@ -87,7 +87,7 @@ pemas = np.stack(pemas)
 
 ipPema = pemas[:,instID,:].T
 
-convergence_measure = np.mean(emas[:,:15],axis=1)
+convergence_measure = np.mean(emas,axis=1)
 stdT = np.std(emas,axis=1) 
 stdB = -stdT
 

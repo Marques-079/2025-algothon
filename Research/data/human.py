@@ -9,7 +9,7 @@ prices = (df.values).T
 nInst ,T = 50,750
 # Simulate a 1D system: constant velocity + noise
 
-instID = 5
+instID = 0
 instPrice = prices[instID]
 
 window_length = 20
@@ -37,7 +37,7 @@ for i in range(window_length+1,len(instPrice)):
         scaled_z = 1
     
     scaled_z *= scaled_z
-    if scaled_z > 0.2:
+    if scaled_z > 0.3:
         transition_table.append((i,current_price,scaled_z))
         mean_start = i
     mean_start_table.append(mean_start)
@@ -50,7 +50,7 @@ for t in transition_table:
 lag_mean = []
 stability_start = []
 for i in range(1,len(instPrice)):
-    lag_mean.append(np.mean(instPrice[mean_start_table[i-1]:i]))
+    lag_mean.append(np.mean(instPrice[mean_start_table[i-1]-10:i]))
 
 plt.plot(instPrice)
 plt.plot(lag_mean)
