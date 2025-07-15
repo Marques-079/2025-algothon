@@ -16,7 +16,7 @@ import json
 START_DAY: int = 0
 END_DAY: int = 0
 INSTRUMENT_POSITION_LIMIT: int = 10000
-COMMISSION_RATE: float = 0.0005
+COMMISSION_RATE: float = 0.0005 
 NUMBER_OF_INSTRUMENTS: int = 50
 
 # Backtester behavior
@@ -28,8 +28,9 @@ AlignWithEval = True
 
 
 ## For training use Train, when doing testing do TestOnly or Test. ONLY ONCE WE HAVE ALL MODELS ASSEMBLED DO WE USE **VAL** or **VALONLY**
-TESTING_RANGE = 'FullTest'
-INSTRUMENT_NUMBER = 0
+
+TESTING_RANGE = 'Full'
+INSTRUMENT_NUMBER = 49
 
 PLOT_COLORS: Dict[str, str] = {
     "pnl": "#2ca02c",
