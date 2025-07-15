@@ -65,6 +65,7 @@ class Evaluator():
         return (plmu, ret, plstd, annSharpe, totDVolume)
     
     def evaluate(self,startDay,endDay):
+        self.positionsHeld = []
         (meanpl, ret, plstd, sharpe, dvol) = self.calcPL(startDay,endDay,self.getPos)
         score = meanpl - 0.1*plstd
         print ("=====")
@@ -74,20 +75,34 @@ class Evaluator():
         print ("annSharpe(PL): %.2lf " % sharpe)
         print ("totDvolume: %.0lf " % dvol)
         print ("Score: %.2lf" % score)
-        self.comparePositions()
+        self.comparePositions(startDay,endDay)
 
-    def comparePositions(self):
+    def comparePositions(self,startDay,endDay):
         self.positionsHeld = np.stack(self.positionsHeld).T
-        diff = self.positionsHeld-self.referncePositions
-        diff = np.sum(np.abs(diff),axis=1)
-        diff /= np.linalg.norm(diff)
-        ranking = np.argsort(diff)
-        score = 1-diff[ranking]
-        print("Instrument:",ranking)
-        print("Score:",score)
-        self.showPositions(range(50))
+        diff = self.positionsHeld-self.referncePositions[:,startDay:endDay]
+        eqTrades = np.sum(np.where(diff == 0,1,0),axis=1)
+        pdiff = np.where(diff > 0, diff , 0)
+        ndiff = np.where(diff < 0, diff , 0)
+        pscore = np.sum(pdiff,axis=1)
+        nscore = np.sum(ndiff,axis=1)
+        score = np.sum(np.abs(diff),axis=1)
+        print("Mean score:",score.mean(),pscore.mean(),nscore.mean())
+        print("Mean equal trades:",eqTrades.mean())
+        # score /= np.linalg.norm(score)
+        ranking = np.argsort(score)
+        df = pd.DataFrame({
+            "Instruments":ranking,
+            "Score":score[ranking],
+            "pScore":pscore[ranking],
+            "nScore":nscore[ranking],
+            "EqualTrades":eqTrades[ranking]
+        })
+        print(df.describe())
+        # print(df)
+
+        # self.showPositions(range(50),startDay,endDay)
         
-    def showPositions(self,p):
+    def showPositions(self,p,startDay,endDay):
         n = self.referncePositions.shape[0]
         colors = np.random.rand(n, 3)
         cols = 10
@@ -97,8 +112,8 @@ class Evaluator():
         axes = axes.flatten()  # flatten to 1D list of axes
 
         for i in p:
-            diff = self.referncePositions[i, :] - self.positionsHeld[i, :]
+            diff = self.referncePositions[i, startDay:endDay] - self.positionsHeld[i, :]
             diff = np.abs(diff)
-            axes[i].plot(diff, color=colors[i], marker='o', linestyle="", alpha=0.2)
+            axes[i].plot(np.linspace(startDay,endDay,endDay-startDay-1),diff, color=colors[i], marker='o', linestyle="", alpha=0.2)
             axes[i].set_title(f"Instrument {i}")
         plt.show()
