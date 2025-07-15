@@ -12,7 +12,7 @@ nInst ,T = 50,750
 instID = 1
 instPrice = prices[instID]
 
-window_length = 20
+window_length = 5
 
 transition_table = []
 score_table = np.array([])

@@ -62,6 +62,8 @@ def R2Generator(I=50):
         gen_signals(300, instruments=I, std=0.8)[1],
         gen_signals(500, instruments=I, std=0.8, m=0.3)[1],
         gen_signals(1000, instruments=I, std=0.8, m=0.9)[1],
+        gen_signals(1000, instruments=I, std=3, m=0.5)[1],
+        gen_signals(1000, instruments=I, std=4, m=0.1)[1],
     ]
     minvals = np.min(signals,axis=0) 
     minvals = np.where(minvals < 0,minvals,0)

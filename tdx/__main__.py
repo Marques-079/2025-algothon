@@ -14,14 +14,15 @@ def loadPrices(fn):
     return df
 
 RealData = ( loadPrices("prices.txt").values ).T
-TD = RealData
 
 T = ActiveModel.trader
 T.export_trader()
 
+TD = R2Generator()
 ref=  Insider.InsideTrader(TD)
 
 e = Evaluator(TD,getMyPosition,ref.get_exported())
 
 t = TD.shape[1]
 e.evaluate(750,t)
+# e.backtest(750,t)

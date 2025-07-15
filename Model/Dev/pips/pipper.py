@@ -89,28 +89,48 @@ class CausalPIPTrader(Trader):
         self.thresholds     = np.asarray(thresholds, dtype=float)
         self.position_limit = int(position_limit)
         self.nInst          = 50
+        
+        self.first = True
 
         self.curPos = np.zeros(50)
         self.cash = 0
         self.totDVolume = 0
         self.value = 0
         self.todayPLL = []
+        
+        self.bl = np.full(50,1.0)
     @export
     def Alg(self, prcSoFar: np.ndarray) -> np.ndarray:
-        nInst, _ = prcSoFar.shape
-        if nInst != self.nInst:
-            raise ValueError("Price matrix must contain 50 instruments")
+        nInst, t = prcSoFar.shape
+        if self.first:
+            self.first = False
+            for i in range(1,t):
+                simPrc = prcSoFar[:,:i]
+                nInst, _ = simPrc.shape
 
-        pos_dir = np.zeros(nInst, dtype=np.int8)
+                pos_dir = np.zeros(nInst)
+
+                for i in range(nInst):
+                    pos_dir[i] = np.int64(_causal_signal(simPrc[i], self.thresholds[i]))
+
+                new_position = pos_dir * 10_000/prcSoFar[:,-1]
+
+                # Update performance stats incrementally
+                self.update_performance(simPrc, new_position)
+            
+
+        pos_dir = np.zeros(nInst)
 
         for i in range(nInst):
             pos_dir[i] = _causal_signal(prcSoFar[i], self.thresholds[i])
 
-        new_position = pos_dir.astype(np.int32) * self.position_limit
+        new_position = pos_dir * self.position_limit
+        new_position*=self.bl
 
         # Update performance stats incrementally
         self.update_performance(prcSoFar, new_position)
-        stats = self.get_performance_stats()
+        cpnl = self.cum_pnl_per()
+        new_position[cpnl < 10_000]  = 0
 
         return new_position
 
@@ -137,12 +157,10 @@ class CausalPIPTrader(Trader):
 
         self.todayPLL.append(todayPL)
 
-    def get_performance_stats(self):
-        """
-        Returns mean, std, return, Sharpe, total dollars traded per instrument.
-        """
+    def cum_pnl_per(self):
         pll = np.array(self.todayPLL)
-        print(pll.sum(axis=0).sum())
+        cpnl = pll.sum(axis=0)
+        return cpnl
 
     
 

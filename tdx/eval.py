@@ -2,6 +2,7 @@ from matplotlib.lines import lineStyles
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from backtester import *
 
 commRate = 0.0005
 dlrPosLimit = 10000
@@ -117,3 +118,15 @@ class Evaluator():
             axes[i].plot(np.linspace(startDay,endDay,endDay-startDay-1),diff, color=colors[i], marker='o', linestyle="", alpha=0.2)
             axes[i].set_title(f"Instrument {i}")
         plt.show()
+    
+    def backtest(self,startDay,endDay):
+        params: Params = parse_command_line_args()
+        backtester: Backtester = Backtester(params)
+        backtester.price_history = self.prcHist
+        backtester_results: BacktesterResults = backtester.run(
+            startDay,
+            endDay
+        )
+        backtester.show_dashboard(backtester_results,
+            params.graphs)
+        backtester.show_price_entries(backtester_results)
