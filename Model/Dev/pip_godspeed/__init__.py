@@ -1,5 +1,5 @@
 
-from .pip_g import TimeExitTrader
+from .pip_g import FourierARIMATrader
 
-trader = TimeExitTrader()
+trader = FourierARIMATrader()
 #CausalPIPTrader
