@@ -1,5 +1,5 @@
 
-from .pip_g import DynamicPIPTrader
+from .pip_g import TimeExitTrader
 
-trader = DynamicPIPTrader()
+trader = TimeExitTrader()
 #CausalPIPTrader
