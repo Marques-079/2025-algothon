@@ -28,6 +28,7 @@ AlignWithEval = True
 
 
 ## For training use Train, when doing testing do TestOnly or Test. ONLY ONCE WE HAVE ALL MODELS ASSEMBLED DO WE USE **VAL** or **VALONLY**
+
 TESTING_RANGE = 'Full'
 INSTRUMENT_NUMBER = 49
 
@@ -44,7 +45,7 @@ range_dict = {
     "TestOnly": (450, 599),
     "Val": (1, 750),
     "ValOnly": (600, 750),
-    "Full": (1, 1000),
+    "Full": (2, 1000),
     "FullTest": (750, 1000),
 }
 default_strategy_filepath: str = "./main.py"
