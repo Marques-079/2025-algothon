@@ -43,6 +43,8 @@ THRESHOLDS: Sequence[float] = [
 
 POSITION_LIMIT: int = 10_000
 
+commRate = 0.0005
+dlrPosLimit = 10000
 
 # ────────────────────────── helper: causal signal ─────────────────────────
 def _causal_signal(series: np.ndarray, thr: float) -> int:
@@ -77,55 +79,72 @@ def _causal_signal(series: np.ndarray, thr: float) -> int:
 
 # ───────────────────────── trader implementation ──────────────────────────
 class CausalPIPTrader(Trader):
-    """
-    Uses the pre-optimised threshold list to generate target positions
-    of ±10 000 shares (or 0) for each of the 50 instruments.
-    """
-
     def __init__(self,
                  thresholds: Sequence[float] = THRESHOLDS,
                  position_limit: int = POSITION_LIMIT):
-        """
-        Parameters
-        ----------
-        thresholds : sequence(float), length 50
-            Instrument-specific pivot thresholds.
-        position_limit : int
-            Maximum absolute share count per instrument.
-        """
         super().__init__()
         if len(thresholds) != 50:
             raise ValueError("Expecting 50 threshold values (one per instrument)")
+
         self.thresholds     = np.asarray(thresholds, dtype=float)
         self.position_limit = int(position_limit)
+        self.nInst          = 50
 
-    # called once per bar by the back-tester
+        self.curPos = np.zeros(50)
+        self.cash = 0
+        self.totDVolume = 0
+        self.value = 0
+        self.todayPLL = []
     @export
     def Alg(self, prcSoFar: np.ndarray) -> np.ndarray:
-        """
-        Parameters
-        ----------
-        prcSoFar : ndarray (nInst × t_seen)
-            Price history up to *and including* the current bar.
-
-        Returns
-        -------
-        ndarray(int)
-            Target share positions: +10 000, −10 000, or 0 for each instrument.
-        """
         nInst, _ = prcSoFar.shape
-        if nInst != 50:
+        if nInst != self.nInst:
             raise ValueError("Price matrix must contain 50 instruments")
 
         pos_dir = np.zeros(nInst, dtype=np.int8)
 
-        # compute per-instrument direction with its own threshold
         for i in range(nInst):
             pos_dir[i] = _causal_signal(prcSoFar[i], self.thresholds[i])
 
-        # scale ±1/0 to full share size
-        return pos_dir.astype(np.int32) * self.position_limit
+        new_position = pos_dir.astype(np.int32) * self.position_limit
 
+        # Update performance stats incrementally
+        self.update_performance(prcSoFar, new_position)
+        stats = self.get_performance_stats()
+
+        return new_position
+
+    def update_performance(self, prices: np.ndarray, new_position: np.ndarray):
+        prcHistSoFar = prices
+        curPrices = prcHistSoFar[:,-1]
+        # Trading, do not do it on the very last day of the test
+        newPosOrig = new_position
+        posLimits = np.array([int(x) for x in dlrPosLimit / curPrices])
+        newPos = np.clip(newPosOrig, -posLimits, posLimits)
+        deltaPos = newPos - self.curPos
+        dvolumes = curPrices * np.abs(deltaPos)
+        dvolume = np.sum(dvolumes)
+        self.totDVolume += np.sum(dvolumes)
+
+        comms = ( dvolumes * commRate )
+        deltaValue = curPrices * deltaPos
+
+        self.cash -= deltaValue + comms
+        self.curPos = np.array(newPos)
+        posValue = self.curPos*curPrices
+        todayPL = self.cash + posValue - self.value
+        self.value = self.cash + posValue
+
+        self.todayPLL.append(todayPL)
+
+    def get_performance_stats(self):
+        """
+        Returns mean, std, return, Sharpe, total dollars traded per instrument.
+        """
+        pll = np.array(self.todayPLL)
+        print(pll.sum(axis=0).sum())
+
+    
 
 __all__ = ["CausalPIPTraderOptimised"]
 
