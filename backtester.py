@@ -16,7 +16,7 @@ import json
 START_DAY: int = 0
 END_DAY: int = 0
 INSTRUMENT_POSITION_LIMIT: int = 10000
-COMMISSION_RATE: float = 0.0000 
+COMMISSION_RATE: float = 0.0005 
 NUMBER_OF_INSTRUMENTS: int = 50
 
 # Backtester behavior
