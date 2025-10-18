@@ -69,9 +69,3 @@ exploratory data analysis strategy for identifying potentially related assets.
 ## Installation
 
 To install the repository, simply clone it and run `pip install -r requirements.txt` to install the dependencies.
-
-## Acknowledgements
-
-The repository was developed by [Your Name] with contributions from [Other Contributors].
-
-
